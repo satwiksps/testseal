@@ -1,0 +1,29 @@
+[testseal]
+# TestSeal is advisory by default. Change this only after reviewing findings on
+# representative pull requests in your repository.
+fail_on = "never"
+
+test_patterns = ["test_*.py", "*_test.py", "tests/**/*.py"]
+source_roots = ["packages"]
+exclude = [
+  ".git/**",
+  ".venv/**",
+  "**/__pycache__/**",
+  "**/node_modules/**",
+  "**/dist/**",
+]
+
+# Context-only until the repository defines useful guarding-test relationships.
+disabled_rules = ["TS008"]
+
+[testseal.rules.TS001]
+enabled = true
+severity = "high"
+
+[testseal.rules.TS006]
+enabled = true
+severity = "low"
+
+[testseal.rules.TS007]
+enabled = true
+severity = "low"
