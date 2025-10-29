@@ -1,0 +1,8 @@
+- id: testseal
+  name: TestSeal test-integrity scan
+  description: Detect deterministic test-weakening signals in the staged Python diff.
+  entry: testseal scan --staged
+  language: python
+  pass_filenames: false
+  require_serial: true
+  stages: [pre-commit]
