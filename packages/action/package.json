@@ -1,0 +1,44 @@
+{
+  "name": "testseal-action",
+  "version": "0.1.0",
+  "description": "GitHub Action for TestSeal test-suite integrity checks",
+  "private": true,
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/satwiksps/testseal#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/satwiksps/testseal.git",
+    "directory": "packages/action"
+  },
+  "bugs": {
+    "url": "https://github.com/satwiksps/testseal/issues"
+  },
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "clean:dist": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "npm run typecheck && npm run clean:dist && ncc build src/index.ts -o dist --minify --license licenses.txt",
+    "format:check": "prettier --check .",
+    "lint": "eslint src test vitest.config.mts",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run format:check && npm run lint && npm run test:coverage && npm run build"
+  },
+  "dependencies": {
+    "@actions/core": "^2.0.3",
+    "@actions/github": "^8.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@vercel/ncc": "^0.45.0",
+    "@vitest/coverage-v8": "^4.1.10",
+    "eslint": "^9.28.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.34.0",
+    "vitest": "^4.1.10"
+  }
+}
