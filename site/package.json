@@ -1,0 +1,50 @@
+{
+  "name": "testseal-site",
+  "version": "0.1.0",
+  "private": true,
+  "homepage": "https://github.com/satwiksps/testseal#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/satwiksps/testseal.git",
+    "directory": "site"
+  },
+  "bugs": {
+    "url": "https://github.com/satwiksps/testseal/issues"
+  },
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint app tests next.config.ts eslint.config.mjs postcss.config.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/site-content.test.mjs",
+    "verify": "npm run lint && npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "next": "16.3.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@next/eslint-plugin-next": "16.3.1",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "22.20.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "eslint": "9.39.5",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.10.0",
+    "postcss": "8.5.26",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.67.0"
+  },
+  "packageManager": "npm@11.13.0",
+  "type": "module"
+}
