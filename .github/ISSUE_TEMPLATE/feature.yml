@@ -1,0 +1,36 @@
+name: Feature request
+description: Propose a CLI, output, integration, performance, or documentation improvement.
+title: "feature: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What workflow is difficult today? Describe the need before the proposed solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and false-positive impact
+      description: Note changes to rule meaning, output schemas, exit codes, security boundaries, or noise.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and current documentation.
+          required: true
+        - label: I described a current user problem rather than only a solution.
+          required: true

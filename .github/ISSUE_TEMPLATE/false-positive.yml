@@ -1,0 +1,76 @@
+name: False-positive report
+description: Share a legitimate test change that a TestSeal rule flags.
+title: "false positive: "
+labels: ["false-positive", "rules", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        False-positive examples are core product evidence. Please reduce the case before posting and never share proprietary code.
+  - type: dropdown
+    id: rule
+    attributes:
+      label: Rule
+      options:
+        - TS001 — assertion removed
+        - TS002 — test skipped or expected to fail
+        - TS003 — assertion weakened
+        - TS004 — tolerance widened
+        - TS005 — exception swallowed
+        - TS006 — snapshot regeneration enabled
+        - TS007 — subject under test mocked
+        - TS008 — source and guarding test co-edited
+        - Unknown or multiple
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: TestSeal version
+      placeholder: Release version or full commit SHA
+    validations:
+      required: true
+  - type: textarea
+    id: before
+    attributes:
+      label: Minimal before source
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: after
+    attributes:
+      label: Minimal after source
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: finding
+    attributes:
+      label: Finding output
+      description: Paste the finding, including path and line if available.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: explanation
+    attributes:
+      label: Why is this change legitimate?
+      description: Explain the intended behavior and what evidence would distinguish this case.
+    validations:
+      required: true
+  - type: textarea
+    id: configuration
+    attributes:
+      label: Relevant configuration
+      description: Optional. Remove repository-specific secrets or paths.
+      render: toml
+  - type: checkboxes
+    id: fixture
+    attributes:
+      label: Fixture permission
+      options:
+        - label: The reduced example may be added to TestSeal's public regression fixtures under Apache-2.0.
+          required: false
+        - label: I removed proprietary code, credentials, and personal data.
+          required: true

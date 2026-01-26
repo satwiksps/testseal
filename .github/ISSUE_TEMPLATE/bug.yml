@@ -1,0 +1,64 @@
+name: Bug report
+description: Report incorrect CLI, configuration, output, or integration behavior.
+title: "bug: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for the report. For an incorrect rule finding, use the dedicated false-positive form. Report vulnerabilities through the private process in `SECURITY.md`.
+  - type: input
+    id: version
+    attributes:
+      label: TestSeal version
+      description: Paste the release version or full commit SHA.
+      placeholder: 0.1.0 or 0123456789abcdef...
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Include operating system, Python version, and installation method.
+      placeholder: Ubuntu 24.04, Python 3.12.5, editable source install
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command and configuration
+      description: Include the exact command and a minimal, redacted configuration.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include complete output or traceback after removing secrets and private source.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Link a public repository or provide the smallest safe sequence that reproduces the problem.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues for this problem.
+          required: true
+        - label: I removed credentials, proprietary code, and personal data.
+          required: true
+        - label: This is not a security vulnerability.
+          required: true

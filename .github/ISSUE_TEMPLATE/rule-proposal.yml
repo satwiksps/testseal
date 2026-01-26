@@ -1,0 +1,60 @@
+name: Rule proposal
+description: Propose a deterministic test-integrity signal or improve an existing rule.
+title: "rule: "
+labels: ["rule-proposal", "needs-design"]
+body:
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risky transformation
+      description: What concrete before/after change should TestSeal surface?
+    validations:
+      required: true
+  - type: textarea
+    id: positive
+    attributes:
+      label: Positive example
+      description: Provide a minimal diff that should produce a finding.
+      render: diff
+    validations:
+      required: true
+  - type: textarea
+    id: negative
+    attributes:
+      label: Legitimate counterexample
+      description: Provide a similar change that must not produce a finding, or explain why none is known.
+      render: diff
+    validations:
+      required: true
+  - type: textarea
+    id: deterministic
+    attributes:
+      label: Deterministic evidence
+      description: Describe the syntax, diff, or configuration evidence that separates the cases without guessing author intent.
+    validations:
+      required: true
+  - type: dropdown
+    id: confidence
+    attributes:
+      label: Expected confidence posture
+      options:
+        - High-signal default rule
+        - Pattern-specific default rule
+        - Lower-confidence advisory rule
+        - Experimental or disabled-by-default rule
+    validations:
+      required: true
+  - type: textarea
+    id: prior_art
+    attributes:
+      label: Prior art and alternatives
+      description: Link related linters, Semgrep rules, reviewers, papers, or existing TestSeal rules.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: This proposal reports a transformation, not whether an author used AI or acted maliciously.
+          required: true
+        - label: I searched existing rule proposals.
+          required: true
