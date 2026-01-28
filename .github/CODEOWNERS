@@ -1,0 +1,9 @@
+# Default ownership for review routing.
+* @satwiksps
+
+# Security-sensitive automation and distribution surfaces.
+/.github/ @satwiksps
+/action.yml @satwiksps
+/packages/action/ @satwiksps
+/packages/testseal/ @satwiksps
+/pyproject.toml @satwiksps
