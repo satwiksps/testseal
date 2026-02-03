@@ -1,0 +1,58 @@
+name: TestSeal
+description: Detect test-suite weakening in Python and pytest changes.
+author: TestSeal contributors
+
+branding:
+  color: blue
+  icon: shield
+
+inputs:
+  base:
+    description: Base Git ref or commit to compare.
+    required: false
+  head:
+    description: Head Git ref or commit to compare. TestSeal defaults to HEAD.
+    required: false
+  staged:
+    description: Analyze staged changes instead of the working-tree or ref diff.
+    required: false
+    default: "false"
+  config:
+    description: Path to a TestSeal TOML configuration file.
+    required: false
+  paths:
+    description: Newline-delimited paths to include in the scan.
+    required: false
+  fail-on:
+    description: Override the configured failure threshold (never, low, medium, or high).
+    required: false
+  python-command:
+    description: Python executable name or absolute path. Command-line flags are not accepted.
+    required: false
+    default: python
+  install:
+    description: Install the bundled TestSeal Python package before scanning.
+    required: false
+    default: "true"
+
+outputs:
+  finding-count:
+    description: Total number of findings.
+  high-count:
+    description: Number of high-severity findings.
+  medium-count:
+    description: Number of medium-severity findings.
+  low-count:
+    description: Number of low-severity findings.
+  files-scanned:
+    description: Number of files scanned.
+  suppressed-count:
+    description: Number of findings ignored by fingerprint policy.
+  outcome:
+    description: Scan outcome (clean, findings, incomplete, threshold-failed, or error).
+  result:
+    description: Normalized TestSeal JSON report.
+
+runs:
+  using: node24
+  main: packages/action/dist/index.js
