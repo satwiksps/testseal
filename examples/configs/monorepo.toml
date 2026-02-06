@@ -1,0 +1,18 @@
+[testseal]
+# Example only: adapt paths to the package boundaries in your repository.
+fail_on = "never"
+include = [
+  "services/*.py",
+  "services/**/*.py",
+  "libraries/*.py",
+  "libraries/**/*.py",
+]
+exclude = ["**/generated/**", "**/vendor/**"]
+test_patterns = ["**/tests/test_*.py", "**/*_test.py"]
+source_roots = ["services", "libraries"]
+
+# A project-specific map makes TS008 meaningful across package boundaries.
+
+[testseal.guarding_tests]
+"services/billing/**/*.py" = ["services/billing/tests/**/*.py"]
+"libraries/money/**/*.py" = ["libraries/money/tests/**/*.py"]
