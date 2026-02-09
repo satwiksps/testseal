@@ -1,0 +1,18 @@
+[testseal]
+# Example for a team that has already baselined TestSeal findings.
+fail_on = "high"
+include = ["src/*.py", "src/**/*.py", "tests/*.py", "tests/**/*.py"]
+exclude = ["tests/fixtures/**", "tests/generated/**"]
+test_patterns = ["tests/test_*.py", "tests/*_test.py", "tests/**/*.py"]
+source_roots = ["src"]
+
+[testseal.rules.TS001]
+enabled = true
+severity = "high"
+
+[testseal.rules.TS002]
+enabled = true
+severity = "high"
+
+[testseal.rules.TS008]
+enabled = false
