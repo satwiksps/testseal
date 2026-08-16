@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If TestSeal supports your work, please cite the software and the exact version you used."
+title: "TestSeal"
+abstract: "Deterministic test-suite integrity checks for Python and pytest diffs."
+type: software
+authors:
+  - family-names: "Sahoo"
+    given-names: "Satwik Sai Prakash"
+    alias: "satwiksps"
+repository-code: "https://github.com/satwiksps/testseal"
+url: "https://testseal-tool.vercel.app"
+license: "Apache-2.0"
+version: "0.1.0"
+keywords:
+  - "pytest"
+  - "test integrity"
+  - "static analysis"
+  - "AI agents"
