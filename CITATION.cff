@@ -8,7 +8,7 @@ authors:
     given-names: "Satwik Sai Prakash"
     alias: "satwiksps"
 repository-code: "https://github.com/satwiksps/testseal"
-url: "https://testseal-tool.vercel.app"
+url: "https://testseal-integrity.vercel.app"
 license: "Apache-2.0"
 version: "0.1.0"
 date-released: "2026-08-16"

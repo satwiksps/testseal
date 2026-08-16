@@ -17,7 +17,7 @@ Copy `.env.example` to `.env.local` when you want production canonical links
 locally:
 
 ```env
-NEXT_PUBLIC_SITE_URL=https://testseal-tool.vercel.app
+NEXT_PUBLIC_SITE_URL=https://testseal-integrity.vercel.app
 ```
 
 Repository calls to action always use the canonical
