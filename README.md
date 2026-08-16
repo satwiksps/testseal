@@ -43,18 +43,17 @@ how the tests themselves changed.
 
 ## Install
 
-TestSeal requires Python 3.11 or newer and Git 2.x for repository-backed scans.
-Install the signed source release directly from GitHub:
+TestSeal requires Python 3.11 or newer and Git 2.x for repository-backed scans:
 
 ```bash
-python -m pip install "git+https://github.com/satwiksps/testseal.git@v0.1.0"
+python -m pip install testseal
 ```
 
 For an isolated CLI installation:
 
 ```bash
-uv tool install "git+https://github.com/satwiksps/testseal.git@v0.1.0"
-# or: pipx install "git+https://github.com/satwiksps/testseal.git@v0.1.0"
+uv tool install testseal
+# or: pipx install testseal
 ```
 
 ## Use the CLI

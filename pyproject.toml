@@ -38,7 +38,7 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/satwiksps/testseal"
+Homepage = "https://testseal-tool.vercel.app"
 Repository = "https://github.com/satwiksps/testseal.git"
 Issues = "https://github.com/satwiksps/testseal/issues"
 Changelog = "https://github.com/satwiksps/testseal/blob/main/CHANGELOG.md"

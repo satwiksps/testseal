@@ -116,7 +116,7 @@ const integrations = [
 ] as const;
 
 const installCommand = [
-  'python -m pip install "git+https://github.com/satwiksps/testseal.git@v0.1.0"',
+  "python -m pip install testseal",
   "testseal scan --base origin/main --head HEAD",
 ].join("\n");
 
@@ -568,8 +568,8 @@ export default function Home() {
                   Add a second signal to your next Python review.
                 </h2>
                 <p className="mt-4 text-sm leading-6 text-zinc-400">
-                  Install v0.1.0 from its signed Git tag, evaluate findings in
-                  advisory mode, and opt into blocking after measuring your baseline.
+                  Install v0.1.0, evaluate findings in advisory mode, and opt
+                  into blocking after measuring your baseline.
                 </p>
               </div>
               <div className="overflow-hidden rounded-lg border border-white/[0.09] bg-[#0b0b0e]">
