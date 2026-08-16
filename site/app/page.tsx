@@ -1,6 +1,6 @@
 import { CopyButton } from "./components/copy-button";
 import { MobileMenu } from "./components/mobile-menu";
-import { REPOSITORY_URL } from "./site-config";
+import { PYPI_URL, REPOSITORY_URL } from "./site-config";
 import { getSiteUrl } from "./site-url";
 
 const RELEASE_REF = "v0.1.0";
@@ -589,10 +589,10 @@ export default function Home() {
               </p>
               <a
                 className="inline-flex h-10 items-center justify-center rounded-md bg-white px-4 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
-                href={REPOSITORY_URL}
+                href={PYPI_URL}
                 {...externalLinkProps}
               >
-                Explore the repository <span className="ml-1.5" aria-hidden="true">↗</span>
+                View on PyPI <span className="ml-1.5" aria-hidden="true">↗</span>
               </a>
             </div>
           </div>
@@ -616,6 +616,7 @@ export default function Home() {
             <a className="hover:text-zinc-200" href={ruleReferenceUrl} {...externalLinkProps}>Rules</a>
             <a className="hover:text-zinc-200" href={securityUrl} {...externalLinkProps}>Security</a>
             <a className="hover:text-zinc-200" href={contributingUrl} {...externalLinkProps}>Contributing</a>
+            <a className="hover:text-zinc-200" href={PYPI_URL} {...externalLinkProps}>PyPI</a>
             <a className="hover:text-zinc-200" href={REPOSITORY_URL} {...externalLinkProps}>GitHub</a>
           </div>
         </div>

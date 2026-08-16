@@ -4,6 +4,7 @@
 
 [![CI](https://github.com/satwiksps/testseal/actions/workflows/ci.yml/badge.svg)](https://github.com/satwiksps/testseal/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/satwiksps/testseal)](https://github.com/satwiksps/testseal/releases)
+[![PyPI](https://img.shields.io/pypi/v/testseal?logo=pypi&logoColor=white)](https://pypi.org/project/testseal/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/github/license/satwiksps/testseal)](https://github.com/satwiksps/testseal/blob/main/LICENSE)
 
