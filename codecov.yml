@@ -1,0 +1,29 @@
+coverage:
+  precision: 2
+  round: down
+  range: "80...100"
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: 80%
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: true
+
+flags:
+  python:
+    paths:
+      - packages/testseal/src/testseal/
+  action:
+    paths:
+      - packages/action/src/
+
+ignore:
+  - packages/action/dist/
+  - site/

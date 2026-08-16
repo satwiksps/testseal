@@ -1,10 +1,11 @@
 # TestSeal
 
-![TestSeal — deterministic test integrity for the agent era](https://raw.githubusercontent.com/satwiksps/testseal/main/docs/assets/testseal-banner.svg)
+![TestSeal](https://raw.githubusercontent.com/satwiksps/testseal/main/docs/assets/testseal-banner.svg)
 
 [![CI](https://github.com/satwiksps/testseal/actions/workflows/ci.yml/badge.svg)](https://github.com/satwiksps/testseal/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/satwiksps/testseal)](https://github.com/satwiksps/testseal/releases)
 [![PyPI](https://img.shields.io/pypi/v/testseal?logo=pypi&logoColor=white)](https://pypi.org/project/testseal/)
+[![Codecov](https://codecov.io/gh/satwiksps/testseal/graph/badge.svg)](https://codecov.io/gh/satwiksps/testseal)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/github/license/satwiksps/testseal)](https://github.com/satwiksps/testseal/blob/main/LICENSE)
 

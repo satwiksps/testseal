@@ -6,7 +6,7 @@ const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "TestSeal — Catch Test Weakening Before It Merges",
+  title: "TestSeal",
   description:
     "Deterministic, diff-aware checks for weakened assertions, new skips, wider tolerances, and other Python test-integrity risks.",
   keywords: [
@@ -24,14 +24,14 @@ export const metadata: Metadata = {
     type: "website",
     url: "/",
     siteName: "TestSeal",
-    title: "Catch test weakening before it merges.",
+    title: "TestSeal",
     description:
       "Deterministic, offline test-integrity checks for Python and pytest diffs.",
-    images: [{ url: "/og.png", width: 1731, height: 909, alt: "TestSeal test-integrity report" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "TestSeal test-integrity report" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Catch test weakening before it merges.",
+    title: "TestSeal",
     description:
       "Deterministic test-integrity checks for Python and pytest diffs.",
     images: ["/og.png"],

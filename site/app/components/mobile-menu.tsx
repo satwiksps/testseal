@@ -69,7 +69,7 @@ export function MobileMenu() {
             rel="noreferrer"
             onClick={() => setOpen(false)}
           >
-            Repository ↗
+            Repository
           </a>
         </div>
       ) : null}

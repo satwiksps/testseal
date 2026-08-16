@@ -22,14 +22,11 @@ export function CopyButton({ value, label }: CopyButtonProps) {
 
   return (
     <button
-      className="inline-flex h-7 items-center gap-1.5 rounded border border-white/[0.08] bg-white/[0.025] px-2 font-mono text-[9px] font-medium text-zinc-400 transition-colors hover:border-white/15 hover:text-white"
+      className="inline-flex h-7 items-center rounded border border-white/[0.08] bg-white/[0.025] px-2 font-mono text-[9px] font-medium text-zinc-400 transition-colors hover:border-white/15 hover:text-white"
       type="button"
       onClick={copy}
       aria-label={label}
     >
-      <span className={copied ? "text-emerald-300" : "text-zinc-600"} aria-hidden="true">
-        {copied ? "✓" : "⧉"}
-      </span>
       <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
     </button>
   );

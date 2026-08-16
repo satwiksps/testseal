@@ -45,7 +45,8 @@ test("site metadata and deployment target are finalized", async () => {
     source("postcss.config.mjs"),
   ]);
 
-  assert.match(layout, /TestSeal — Catch Test Weakening Before It Merges/);
+  assert.match(layout, /title: "TestSeal"/);
+  assert.doesNotMatch(layout, /TestSeal [\u2013\u2014-] Catch Test Weakening/);
   assert.doesNotMatch(layout, /codex-preview|Starter Project/);
   assert.equal(JSON.parse(packageJson).scripts.build, "next build");
   assert.equal(JSON.parse(vercel).framework, "nextjs");
@@ -60,7 +61,13 @@ test("site metadata and deployment target are finalized", async () => {
 
 test("landing page avoids the previous decorative visual language", async () => {
   const page = await source("app/page.tsx");
+  const mobileMenu = await source("app/components/mobile-menu.tsx");
   const css = await source("app/globals.css");
+
+  assert.doesNotMatch(
+    page + mobileMenu,
+    /[\u2013\u2014\u2190\u2192\u21D2\u2197\u27A1\u27A4]/,
+  );
 
   for (const staleClass of [
     "ambient-one",

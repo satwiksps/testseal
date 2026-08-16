@@ -197,7 +197,7 @@ export default function Home() {
               href={REPOSITORY_URL}
               {...externalLinkProps}
             >
-              GitHub <span className="ml-1.5 text-zinc-400" aria-hidden="true">↗</span>
+              GitHub
             </a>
             <MobileMenu />
           </div>
@@ -210,7 +210,7 @@ export default function Home() {
           <div className="relative mx-auto max-w-7xl px-5 pb-16 pt-24 sm:px-6 sm:pt-28 lg:px-8 lg:pb-20 lg:pt-32">
             <div className="mx-auto max-w-4xl text-center">
               <p className="mb-5 font-mono text-xs font-medium uppercase tracking-[0.18em] text-blue-300">
-                Open source · Python / pytest · Runs locally
+                Open source, Python and pytest, runs locally
               </p>
               <h1 className="text-balance text-5xl font-semibold tracking-[-0.045em] text-white sm:text-6xl lg:text-[72px] lg:leading-[1.04]">
                 Catch test weakening
@@ -233,7 +233,7 @@ export default function Home() {
                   href={REPOSITORY_URL}
                   {...externalLinkProps}
                 >
-                  View source <span className="ml-1.5 text-zinc-400" aria-hidden="true">↗</span>
+                  View source
                 </a>
               </div>
               <p className="mt-5 text-sm text-zinc-400">
@@ -363,8 +363,8 @@ export default function Home() {
               {[
                 ["AST-aware", "before / after analysis"],
                 ["Offline", "no network boundary"],
-                ["Portable", "text · JSON · SARIF"],
-                ["Consistent", "CLI · hook · Action"],
+                ["Portable", "text / JSON / SARIF"],
+                ["Consistent", "CLI / hook / Action"],
               ].map(([label, detail]) => (
                 <div
                   className="bg-[#0b0b0e] px-5 py-4"
@@ -459,7 +459,7 @@ export default function Home() {
               href={ruleReferenceUrl}
               {...externalLinkProps}
             >
-              Read supported patterns and known limits <span className="ml-1.5" aria-hidden="true">↗</span>
+              Supported patterns and limits
             </a>
           </div>
         </section>
@@ -525,7 +525,7 @@ export default function Home() {
                   href={architectureUrl}
                   {...externalLinkProps}
                 >
-                  Read the architecture <span className="ml-1.5 text-zinc-400" aria-hidden="true">↗</span>
+                  Read the architecture
                 </a>
               </div>
 
@@ -585,14 +585,14 @@ export default function Home() {
 
             <div className="mt-14 flex flex-col gap-4 border-t border-white/[0.07] pt-8 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-zinc-400">
-                Apache-2.0 · Python 3.11+ · Advisory by default
+                Apache-2.0, Python 3.11+, advisory by default
               </p>
               <a
                 className="inline-flex h-10 items-center justify-center rounded-md bg-white px-4 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
                 href={PYPI_URL}
                 {...externalLinkProps}
               >
-                View on PyPI <span className="ml-1.5" aria-hidden="true">↗</span>
+                View on PyPI
               </a>
             </div>
           </div>
@@ -622,7 +622,7 @@ export default function Home() {
         </div>
         <div className="mx-auto flex max-w-7xl flex-col gap-1 border-t border-white/[0.05] px-5 py-5 font-mono text-[11px] text-zinc-400 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <span>Apache License 2.0</span>
-          <span>v0.1.0 · Deterministic and offline</span>
+          <span>v0.1.0, deterministic and offline</span>
         </div>
       </footer>
 

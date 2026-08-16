@@ -12,14 +12,14 @@ body:
     attributes:
       label: Rule
       options:
-        - TS001 — assertion removed
-        - TS002 — test skipped or expected to fail
-        - TS003 — assertion weakened
-        - TS004 — tolerance widened
-        - TS005 — exception swallowed
-        - TS006 — snapshot regeneration enabled
-        - TS007 — subject under test mocked
-        - TS008 — source and guarding test co-edited
+        - "TS001: assertion removed"
+        - "TS002: test skipped or expected to fail"
+        - "TS003: assertion weakened"
+        - "TS004: tolerance widened"
+        - "TS005: exception swallowed"
+        - "TS006: snapshot regeneration enabled"
+        - "TS007: subject under test mocked"
+        - "TS008: source and guarding test co-edited"
         - Unknown or multiple
     validations:
       required: true

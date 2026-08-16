@@ -18,6 +18,9 @@ jobs:
   python:
     name: Python ${{ matrix.python }} on ${{ matrix.os }}
     timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -57,7 +60,18 @@ jobs:
           --cov=testseal
           --cov-branch
           --cov-report=term-missing
+          --cov-report=xml:coverage.xml
           --cov-fail-under=80
+      - name: Upload Python coverage
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12'
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          files: coverage.xml
+          flags: python
+          name: python
+          disable_search: true
+          fail_ci_if_error: false
+          use_oidc: ${{ github.event_name != 'pull_request' }}
       - name: Exercise CLI
         run: python scripts/verify_example.py
 
@@ -99,6 +113,9 @@ jobs:
     name: TypeScript Action
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
     defaults:
       run:
         working-directory: packages/action
@@ -117,6 +134,15 @@ jobs:
         run: npm audit --audit-level=high
       - name: Verify formatting, types, tests, and bundle
         run: npm run verify
+      - name: Upload Action coverage
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          files: .testseal/action-coverage/lcov.info
+          flags: action
+          name: action
+          disable_search: true
+          fail_ci_if_error: false
+          use_oidc: ${{ github.event_name != 'pull_request' }}
       - name: Ensure the executable bundle is committed
         run: >-
           git ls-files --error-unmatch
