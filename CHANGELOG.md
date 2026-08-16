@@ -6,6 +6,11 @@ is omitted unless it changes installation or runtime behavior.
 
 ## [Unreleased]
 
+### Changed
+
+- Release automation now confirms that a published wheel is available from
+  PyPI before creating the corresponding GitHub release.
+
 ## [0.1.0] - 2026-08-16
 
 ### Added

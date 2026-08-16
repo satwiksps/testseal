@@ -170,6 +170,18 @@ jobs:
           path: dist
       - name: Publish distributions to PyPI
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+      - name: Verify the package is available from PyPI
+        shell: bash
+        run: |
+          release_version="${GITHUB_REF_NAME#v}"
+          for attempt in {1..12}; do
+            if python -m pip download --no-deps --only-binary=:all: \
+              --dest "${RUNNER_TEMP}/pypi-check" "testseal==${release_version}"; then
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1
 
   github-release:
     name: Create GitHub release

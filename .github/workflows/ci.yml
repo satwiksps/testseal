@@ -70,7 +70,7 @@ jobs:
           flags: python
           name: python
           disable_search: true
-          fail_ci_if_error: false
+          fail_ci_if_error: true
           use_oidc: ${{ github.event_name != 'pull_request' }}
       - name: Exercise CLI
         run: python scripts/verify_example.py
@@ -140,8 +140,9 @@ jobs:
           files: .testseal/action-coverage/lcov.info
           flags: action
           name: action
+          network_prefix: packages/action/
           disable_search: true
-          fail_ci_if_error: false
+          fail_ci_if_error: true
           use_oidc: ${{ github.event_name != 'pull_request' }}
       - name: Ensure the executable bundle is committed
         run: >-

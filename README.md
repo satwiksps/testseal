@@ -2,12 +2,13 @@
 
 ![TestSeal](https://raw.githubusercontent.com/satwiksps/testseal/main/docs/assets/testseal-banner.svg)
 
-[![CI](https://github.com/satwiksps/testseal/actions/workflows/ci.yml/badge.svg)](https://github.com/satwiksps/testseal/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/satwiksps/testseal)](https://github.com/satwiksps/testseal/releases)
+[![CI](https://github.com/satwiksps/testseal/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/satwiksps/testseal/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/testseal?logo=pypi&logoColor=white)](https://pypi.org/project/testseal/)
-[![Codecov](https://codecov.io/gh/satwiksps/testseal/graph/badge.svg)](https://codecov.io/gh/satwiksps/testseal)
+[![Codecov](https://codecov.io/gh/satwiksps/testseal/graph/badge.svg?branch=main)](https://codecov.io/gh/satwiksps/testseal)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/github/license/satwiksps/testseal)](https://github.com/satwiksps/testseal/blob/main/LICENSE)
+
+[Website](https://testseal-integrity.vercel.app) | [Rule reference](https://github.com/satwiksps/testseal/blob/main/docs/rules.md) | [Architecture](https://github.com/satwiksps/testseal/blob/main/docs/architecture.md) | [Contributing](https://github.com/satwiksps/testseal/blob/main/CONTRIBUTING.md)
 
 **Deterministic test-integrity checks for Python and pytest diffs.**
 
@@ -43,9 +44,9 @@ how the tests themselves changed.
 - **Advisory by default:** teams choose when findings should block a workflow.
 - **Portable:** text, versioned JSON, SARIF 2.1.0, pre-commit, and GitHub Actions.
 
-## Install
+## Quick start
 
-TestSeal requires Python 3.11 or newer and Git 2.x for repository-backed scans:
+TestSeal requires Python 3.11 or newer and Git for repository-backed scans:
 
 ```bash
 python -m pip install testseal
@@ -58,31 +59,24 @@ uv tool install testseal
 # or: pipx install testseal
 ```
 
-## Use the CLI
-
-Scan tracked changes plus non-ignored untracked files in the working tree:
+Run it in a Git repository:
 
 ```bash
 testseal scan
 ```
 
-Scan a branch relative to its base:
+The default scan is advisory. Add `--fail-on high` when high-severity findings
+should return exit code `1`.
 
-```bash
-testseal scan --base origin/main --head HEAD
-```
+## Scan modes
 
-Scan only staged changes:
-
-```bash
-testseal scan --staged
-```
-
-TestSeal remains advisory unless a threshold is configured:
-
-```bash
-testseal scan --fail-on high
-```
+| Goal | Command |
+| --- | --- |
+| Check working-tree and untracked changes | `testseal scan` |
+| Check staged changes | `testseal scan --staged` |
+| Compare a branch with its base | `testseal scan --base origin/main --head HEAD` |
+| Read a unified diff | `testseal scan --diff changes.patch` |
+| Block on high-severity findings | `testseal scan --fail-on high` |
 
 Exit codes are `0` for a completed advisory scan, `1` when the selected finding
 threshold is met, and `2` for invalid configuration or an incomplete blocking
@@ -208,6 +202,11 @@ coverage, linters, type checkers, and security analysis. A finding can describe
 a legitimate refactor, so blocking is explicit and reviewed exceptions use
 stable fingerprints rather than hidden heuristics.
 
+The analyzer currently targets Python test files. It understands common pytest,
+unittest, and `unittest.mock` patterns. The TypeScript code in this repository
+implements the GitHub Action and website; it does not analyze JavaScript or
+TypeScript test suites.
+
 Read the full [architecture and trust model](https://github.com/satwiksps/testseal/blob/main/docs/architecture.md)
 and [security policy](https://github.com/satwiksps/testseal/blob/main/SECURITY.md).
 
@@ -226,6 +225,12 @@ python -m pytest
 The TypeScript Action lives in `packages/action` and the Next.js/Tailwind site
 in `site`. See [CONTRIBUTING.md](https://github.com/satwiksps/testseal/blob/main/CONTRIBUTING.md)
 for the complete verification commands and rule-change requirements.
+
+## Support
+
+Use [GitHub Issues](https://github.com/satwiksps/testseal/issues) for reproducible
+bugs and rule false positives. Report vulnerabilities through
+[GitHub private vulnerability reporting](https://github.com/satwiksps/testseal/security/advisories/new).
 
 ## License
 
