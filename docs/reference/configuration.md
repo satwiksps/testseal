@@ -43,8 +43,10 @@ severity = "low"
 
 ### `fail_on`
 
-**Type:** string  
-**Values:** `"never"`, `"low"`, `"medium"`, `"high"`  
+**Type:** string
+
+**Values:** `"never"`, `"low"`, `"medium"`, `"high"`
+
 **Default:** `"never"`
 
 Sets the lowest severity that returns exit code `1`. `never` keeps findings
@@ -52,7 +54,8 @@ advisory. CLI `--fail-on` overrides this value.
 
 ### `include`
 
-**Type:** array of strings  
+**Type:** array of strings
+
 **Default:**
 
 ```toml
@@ -71,7 +74,8 @@ patterns apply before test classification.
 
 ### `exclude`
 
-**Type:** array of strings  
+**Type:** array of strings
+
 **Default:**
 
 ```toml
@@ -90,7 +94,8 @@ vendored, fixture, and tool-output paths here.
 
 ### `test_patterns`
 
-**Type:** array of strings  
+**Type:** array of strings
+
 **Default:**
 
 ```toml
@@ -108,7 +113,8 @@ Other eligible paths can still receive artifact or co-edit analysis.
 
 ### `source_roots`
 
-**Type:** array of strings  
+**Type:** array of strings
+
 **Default:** `["src", "lib", "app"]`
 
 Identifies repository areas treated as source for co-edit context. Use
@@ -117,7 +123,8 @@ layout.
 
 ### `guarding_tests`
 
-**Type:** table from source glob to a string or array of test globs  
+**Type:** table from source glob to a string or array of test globs
+
 **Default:** empty table
 
 Defines explicit source-to-test relationships for TS008:
@@ -135,7 +142,8 @@ changed file set.
 
 ### `disabled_rules`
 
-**Type:** array of rule ID strings  
+**Type:** array of rule ID strings
+
 **Default:** empty array
 
 Disables rules across the scan:
@@ -149,7 +157,8 @@ even if its rule table sets `enabled = true`.
 
 ### `ignore_fingerprints`
 
-**Type:** array of strings  
+**Type:** array of strings
+
 **Default:** empty array
 
 Suppresses reviewed findings by deterministic fingerprint. Every entry must be
@@ -164,7 +173,8 @@ reported in `suppressed_count`.
 
 ### `rules`
 
-**Type:** table keyed by rule ID  
+**Type:** table keyed by rule ID
+
 **Default:** empty table
 
 Each rule table accepts only `enabled` and `severity`:
@@ -177,15 +187,18 @@ severity = "low"
 
 #### `enabled`
 
-**Type:** boolean  
+**Type:** boolean
+
 **Default:** `true`
 
 Enables or disables that rule.
 
 #### `severity`
 
-**Type:** string  
-**Values:** `"low"`, `"medium"`, `"high"`  
+**Type:** string
+
+**Values:** `"low"`, `"medium"`, `"high"`
+
 **Default:** the rule's documented default
 
 Overrides the emitted severity without changing match behavior or confidence.
