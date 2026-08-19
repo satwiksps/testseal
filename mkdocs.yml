@@ -1,0 +1,136 @@
+site_name: TestSeal
+site_description: Deterministic test-integrity checks for Python and pytest diffs.
+site_author: TestSeal contributors
+site_url: !ENV [READTHEDOCS_CANONICAL_URL, "https://testseal.readthedocs.io/en/latest/"]
+repo_name: satwiksps/testseal
+repo_url: https://github.com/satwiksps/testseal
+edit_uri: edit/main/docs/
+copyright: Copyright &copy; TestSeal contributors. Licensed under Apache-2.0.
+
+docs_dir: docs
+site_dir: .docs-site
+use_directory_urls: true
+exclude_docs: |
+  assets/social/
+  assets/testseal-banner.svg
+
+theme:
+  name: material
+  language: en
+  font: false
+  icon:
+    logo: material/shield-check-outline
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Use light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Use dark mode
+  features:
+    - content.action.edit
+    - content.code.annotate
+    - content.code.copy
+    - content.tabs.link
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+
+nav:
+  - Overview: index.md
+  - Get started:
+      - Installation: getting-started/installation.md
+      - First scan: getting-started/first-scan.md
+      - Adopt in a repository: getting-started/adoption.md
+  - Guides:
+      - Choose a scan mode: guides/scan-modes.md
+      - Review and suppress findings: guides/triage.md
+      - Configure a monorepo: guides/monorepos.md
+      - Scan a saved diff: guides/unified-diffs.md
+      - Troubleshooting: guides/troubleshooting.md
+  - Integrations:
+      - GitHub Actions: integrations/github-actions.md
+      - pre-commit: integrations/pre-commit.md
+      - Other CI systems: integrations/other-ci.md
+  - Reference:
+      - Rules: rules.md
+      - CLI: reference/cli.md
+      - Configuration: reference/configuration.md
+      - Reports: reference/reports.md
+      - GitHub Action: reference/action.md
+      - Python API: reference/python-api.md
+  - Concepts:
+      - How analysis works: concepts/how-analysis-works.md
+      - Architecture: architecture.md
+      - Trust and security: concepts/trust-and-security.md
+      - Scope and limitations: concepts/scope-and-limitations.md
+  - Contribute:
+      - Development setup: contributing/development.md
+      - Rule development: contributing/rules.md
+      - Documentation: contributing/documentation.md
+  - Project:
+      - Support: project/support.md
+      - Release notes: project/release-notes.md
+      - License and citation: project/license-and-citation.md
+
+plugins:
+  - search:
+      lang: en
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      title: On this page
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/satwiksps/testseal
+      name: TestSeal on GitHub
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/testseal/
+      name: TestSeal on PyPI
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn

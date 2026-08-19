@@ -128,7 +128,7 @@ def test_sarif_report_is_valid_shape_and_uses_forward_slash_uri() -> None:
         "https://github.com/satwiksps/testseal"
     )
     assert run["tool"]["driver"]["rules"][0]["helpUri"].endswith(
-        "docs/rules.md#ts001-assertion-removed"
+        "/rules/#ts001-assertion-removed"
     )
     assert run["results"][0]["ruleId"] == "TS001"
     assert run["results"][0]["level"] == "error"

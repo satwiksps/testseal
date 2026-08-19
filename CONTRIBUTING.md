@@ -54,6 +54,17 @@ npm ci
 npm run verify
 ```
 
+For documentation changes:
+
+```bash
+python -m pip install -r docs/requirements.txt
+python -m mkdocs build --strict
+```
+
+Use `python -m mkdocs serve` for a local preview. Documentation output is
+written to `.docs-site/`; the `site/` directory contains the Next.js landing
+site and must not be used as MkDocs output.
+
 ## Rule changes
 
 A rule change needs examples that show both sides of the boundary:

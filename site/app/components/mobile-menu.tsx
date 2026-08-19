@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { REPOSITORY_URL } from "../site-config";
+import { DOCUMENTATION_URL, REPOSITORY_URL } from "../site-config";
 
 const links = [
   ["Product", "#product"],
@@ -64,6 +64,15 @@ export function MobileMenu() {
           ))}
           <a
             className="mt-1 block border-t border-white/[0.07] px-3 py-3 text-sm font-medium text-zinc-200"
+            href={DOCUMENTATION_URL}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => setOpen(false)}
+          >
+            Documentation
+          </a>
+          <a
+            className="block px-3 py-3 text-sm font-medium text-zinc-200"
             href={REPOSITORY_URL}
             target="_blank"
             rel="noreferrer"

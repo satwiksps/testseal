@@ -1,3 +1,7 @@
+---
+description: Exact contracts, supported syntax, intentional non-findings, and limits for TS001 through TS008.
+---
+
 # Rule reference
 
 TestSeal rules report evidence about a diff. They do not infer whether a change

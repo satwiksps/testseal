@@ -1,6 +1,6 @@
 import { CopyButton } from "./components/copy-button";
 import { MobileMenu } from "./components/mobile-menu";
-import { PYPI_URL, REPOSITORY_URL } from "./site-config";
+import { DOCUMENTATION_URL, PYPI_URL, REPOSITORY_URL } from "./site-config";
 import { getSiteUrl } from "./site-url";
 
 const RELEASE_REF = "v0.1.0";
@@ -120,8 +120,8 @@ const installCommand = [
   "testseal scan --base origin/main --head HEAD",
 ].join("\n");
 
-const ruleReferenceUrl = REPOSITORY_URL + "/blob/main/docs/rules.md";
-const architectureUrl = REPOSITORY_URL + "/blob/main/docs/architecture.md";
+const ruleReferenceUrl = DOCUMENTATION_URL + "en/latest/rules/";
+const architectureUrl = DOCUMENTATION_URL + "en/latest/architecture/";
 const securityUrl = REPOSITORY_URL + "/blob/main/SECURITY.md";
 const contributingUrl = REPOSITORY_URL + "/blob/main/CONTRIBUTING.md";
 
@@ -184,7 +184,7 @@ export default function Home() {
             </a>
             <a
               className="transition-colors hover:text-white"
-              href={ruleReferenceUrl}
+              href={DOCUMENTATION_URL}
               {...externalLinkProps}
             >
               Docs
@@ -613,6 +613,7 @@ export default function Home() {
             </p>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-3 text-xs text-zinc-400">
+            <a className="hover:text-zinc-200" href={DOCUMENTATION_URL} {...externalLinkProps}>Docs</a>
             <a className="hover:text-zinc-200" href={ruleReferenceUrl} {...externalLinkProps}>Rules</a>
             <a className="hover:text-zinc-200" href={securityUrl} {...externalLinkProps}>Security</a>
             <a className="hover:text-zinc-200" href={contributingUrl} {...externalLinkProps}>Contributing</a>

@@ -8,7 +8,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/github/license/satwiksps/testseal)](https://github.com/satwiksps/testseal/blob/main/LICENSE)
 
-[Website](https://testseal-integrity.vercel.app) | [Rule reference](https://github.com/satwiksps/testseal/blob/main/docs/rules.md) | [Architecture](https://github.com/satwiksps/testseal/blob/main/docs/architecture.md) | [Contributing](https://github.com/satwiksps/testseal/blob/main/CONTRIBUTING.md)
+[Website](https://testseal-integrity.vercel.app) | [Documentation](https://testseal.readthedocs.io/) | [Rule reference](https://testseal.readthedocs.io/en/latest/rules/) | [Architecture](https://testseal.readthedocs.io/en/latest/architecture/) | [Contributing](https://github.com/satwiksps/testseal/blob/main/CONTRIBUTING.md)
 
 **Deterministic test-integrity checks for Python and pytest diffs.**
 
@@ -185,7 +185,7 @@ Action outputs include `finding-count`, severity counts, `files-scanned`,
 | `TS008` | Source and a configured guarding test changed together | Low | Low |
 
 The table is a summary. The
-[rule reference](https://github.com/satwiksps/testseal/blob/main/docs/rules.md)
+[rule reference](https://testseal.readthedocs.io/en/latest/rules/)
 defines supported syntax, intentional non-findings, and precision limits.
 Context-heavy rules should be baselined before enabling a blocking threshold.
 
@@ -207,7 +207,7 @@ unittest, and `unittest.mock` patterns. The TypeScript code in this repository
 implements the GitHub Action and website; it does not analyze JavaScript or
 TypeScript test suites.
 
-Read the full [architecture and trust model](https://github.com/satwiksps/testseal/blob/main/docs/architecture.md)
+Read the full [architecture and trust model](https://testseal.readthedocs.io/en/latest/architecture/)
 and [security policy](https://github.com/satwiksps/testseal/blob/main/SECURITY.md).
 
 ## Development

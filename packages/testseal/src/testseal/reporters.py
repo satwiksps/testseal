@@ -10,6 +10,7 @@ from .models import AuditResult, Finding, Severity
 from .rules import RULES
 
 REPOSITORY_URL = "https://github.com/satwiksps/testseal"
+RULE_DOCUMENTATION_URL = "https://testseal.readthedocs.io/en/latest/rules/"
 RULE_DOC_ANCHORS = {
     "TS001": "ts001-assertion-removed",
     "TS002": "ts002-test-skipped-or-expected-to-fail",
@@ -81,9 +82,7 @@ def _sarif_rule(rule_id: str) -> dict[str, Any]:
         "name": metadata.title.replace(" ", ""),
         "shortDescription": {"text": metadata.title},
         "fullDescription": {"text": metadata.remediation},
-        "helpUri": (
-            f"{REPOSITORY_URL}/blob/main/docs/rules.md#{RULE_DOC_ANCHORS[rule_id]}"
-        ),
+        "helpUri": f"{RULE_DOCUMENTATION_URL}#{RULE_DOC_ANCHORS[rule_id]}",
         "defaultConfiguration": {"level": _sarif_level(metadata.severity)},
         "properties": {
             "tags": ["test-integrity", "security", "ai-agent"],

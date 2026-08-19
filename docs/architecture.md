@@ -1,3 +1,7 @@
+---
+description: TestSeal components, analysis pipeline, trust boundary, and configuration precedence.
+---
+
 # Architecture
 
 TestSeal has one deterministic detection engine and three delivery surfaces:

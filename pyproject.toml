@@ -42,7 +42,7 @@ Homepage = "https://testseal-integrity.vercel.app"
 Repository = "https://github.com/satwiksps/testseal.git"
 Issues = "https://github.com/satwiksps/testseal/issues"
 Changelog = "https://github.com/satwiksps/testseal/blob/main/CHANGELOG.md"
-Documentation = "https://github.com/satwiksps/testseal#readme"
+Documentation = "https://testseal.readthedocs.io/"
 
 [project.optional-dependencies]
 dev = [

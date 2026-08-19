@@ -11,6 +11,14 @@ is omitted unless it changes installation or runtime behavior.
 - Release automation now confirms that a published wheel is available from
   PyPI before creating the corresponding GitHub release.
 
+### Added
+
+- A complete MkDocs Material documentation site for Read the Docs, including
+  installation, adoption, integrations, configuration, output schemas,
+  security, troubleshooting, and contributor references.
+- Strict documentation builds in CI and canonical documentation links in
+  package metadata, SARIF rule help, the README, and the landing site.
+
 ## [0.1.0] - 2026-08-16
 
 ### Added
