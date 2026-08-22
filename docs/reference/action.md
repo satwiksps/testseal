@@ -8,7 +8,7 @@ description: GitHub Action inputs, outputs, events, and outcomes.
 
 ```yaml
 - id: testseal
-  uses: satwiksps/testseal@89a2ab087ad1b93b6cf26ef2851dc44d8712fc02 # v0.1.0
+  uses: satwiksps/testseal@e6bba7e933c37afc34e2836ac2b1baee7542bfe5 # v1.0.0
   with:
     fail-on: high
 ```
