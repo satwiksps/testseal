@@ -12,11 +12,13 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-TAG_PATTERN = re.compile(
-    r"^v(?P<version>(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))$"
-)
+SEMVER_PATTERN = r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
+TAG_PATTERN = re.compile(rf"^v(?P<version>{SEMVER_PATTERN})$")
 MODULE_VERSION_PATTERN = re.compile(
     r'^__version__\s*=\s*"(?P<version>[^"]+)"$', re.MULTILINE
+)
+CITATION_VERSION_PATTERN = re.compile(
+    rf'^version: "(?P<version>{SEMVER_PATTERN})"$', re.MULTILINE
 )
 
 
@@ -65,9 +67,9 @@ def _read_python_versions() -> tuple[str, str]:
     return package_version, match.group("version")
 
 
-def _read_action_versions() -> tuple[str, str]:
-    package_path = ROOT / "packages/action/package.json"
-    lock_path = ROOT / "packages/action/package-lock.json"
+def _read_node_versions(directory: str, label: str) -> tuple[str, str]:
+    package_path = ROOT / directory / "package.json"
+    lock_path = ROOT / directory / "package-lock.json"
     try:
         with package_path.open(encoding="utf-8") as handle:
             package = json.load(handle)
@@ -78,11 +80,11 @@ def _read_action_versions() -> tuple[str, str]:
         lock_root_version = lock["packages"][""]["version"]
     except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
         raise ReleaseValidationError(
-            f"cannot read Action package versions: {exc}"
+            f"cannot read {label} package versions: {exc}"
         ) from exc
     if not isinstance(package_version, str) or not package_version:
         raise ReleaseValidationError(
-            "Action package version must be a non-empty string"
+            f"{label} package version must be a non-empty string"
         )
     if (
         not isinstance(lock_version, str)
@@ -90,35 +92,21 @@ def _read_action_versions() -> tuple[str, str]:
         or lock_version != lock_root_version
     ):
         raise ReleaseValidationError(
-            "Action package-lock top-level and root package versions must agree"
+            f"{label} package-lock top-level and root package versions must agree"
         )
     return package_version, lock_version
 
 
-def _read_site_versions() -> tuple[str, str]:
-    package_path = ROOT / "site/package.json"
-    lock_path = ROOT / "site/package-lock.json"
+def _read_citation_version() -> str:
     try:
-        with package_path.open(encoding="utf-8") as handle:
-            package = json.load(handle)
-        with lock_path.open(encoding="utf-8") as handle:
-            lock = json.load(handle)
-        package_version = package["version"]
-        lock_version = lock["version"]
-        lock_root_version = lock["packages"][""]["version"]
-    except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
-        raise ReleaseValidationError(f"cannot read website versions: {exc}") from exc
-    if not isinstance(package_version, str) or not package_version:
-        raise ReleaseValidationError("Website version must be a non-empty string")
-    if (
-        not isinstance(lock_version, str)
-        or not isinstance(lock_root_version, str)
-        or lock_version != lock_root_version
-    ):
-        raise ReleaseValidationError(
-            "Website package-lock top-level and root package versions must agree"
-        )
-    return package_version, lock_version
+        citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ReleaseValidationError(f"cannot read CITATION.cff: {exc}") from exc
+
+    citation_match = CITATION_VERSION_PATTERN.search(citation)
+    if citation_match is None:
+        raise ReleaseValidationError("CITATION.cff has no literal release version")
+    return citation_match.group("version")
 
 
 def _has_release_heading(version: str) -> bool:
@@ -163,8 +151,11 @@ def main() -> int:
     expected = match.group("version")
     try:
         python_version, python_module_version = _read_python_versions()
-        action_version, action_lock_version = _read_action_versions()
-        site_version, site_lock_version = _read_site_versions()
+        action_version, action_lock_version = _read_node_versions(
+            "packages/action", "Action"
+        )
+        site_version, site_lock_version = _read_node_versions("site", "Website")
+        citation_version = _read_citation_version()
         has_release_heading = _has_release_heading(expected)
     except ReleaseValidationError as exc:
         print(f"Release metadata is invalid: {exc}", file=sys.stderr)
@@ -183,6 +174,8 @@ def main() -> int:
         mismatches.append(f"Website package is {site_version}")
     if site_lock_version != expected:
         mismatches.append(f"Website package lock is {site_lock_version}")
+    if citation_version != expected:
+        mismatches.append(f"CITATION.cff is {citation_version}")
     if not has_release_heading:
         mismatches.append(
             f"CHANGELOG.md has no '## [{expected}] - YYYY-MM-DD' release heading"

@@ -4,6 +4,15 @@ description: Run TestSeal against working-tree, staged, branch, and saved change
 
 # First scan
 
+Confirm the installation with the built-in example:
+
+```bash
+testseal demo
+```
+
+The demo reports one `TS003` finding without reading Git, repository
+configuration, or the network.
+
 Run TestSeal from the root of a Git repository:
 
 ```bash

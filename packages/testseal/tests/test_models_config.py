@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from testseal.config import Config, ConfigError, config_from_mapping, load_config
+from testseal.config import (
+    Config,
+    ConfigError,
+    RuleConfig,
+    config_from_mapping,
+    load_config,
+)
 from testseal.models import AuditResult, Confidence, Finding, Severity
 
 
@@ -54,6 +61,48 @@ def test_default_config_recognizes_conventional_tests_and_excludes_venv() -> Non
     assert not config.includes_path(".git/hooks/test_noise.py")
     assert not config.includes_path("vendor/node_modules/pkg/test_noise.py")
     assert not config.includes_path("pkg/build/generated.py")
+
+
+def test_direct_config_rejects_string_include() -> None:
+    with pytest.raises(ConfigError, match="include must be a tuple of strings"):
+        Config(include="*.py")  # type: ignore[arg-type]
+
+
+def test_direct_config_rejects_non_rule_config_override() -> None:
+    with pytest.raises(ConfigError, match=r"rules\.TS001 must be a RuleConfig"):
+        Config(rules={"TS001": {}})  # type: ignore[dict-item]
+
+
+@pytest.mark.parametrize(
+    "factory, message",
+    [
+        (lambda: Config(fail_on="high"), "fail_on must be a Severity"),
+        (lambda: Config(exclude="*.py"), "exclude must be a tuple of strings"),
+        (
+            lambda: Config(guarding_tests={"src/**": ["tests/**"]}),
+            "guarding_tests.src/\\*\\* must be a tuple of strings",
+        ),
+        (
+            lambda: Config(disabled_rules=frozenset({"TS999"})),
+            "unknown rule id in disabled_rules",
+        ),
+        (
+            lambda: Config(ignore_fingerprints=frozenset({"invalid"})),
+            "exactly 24 hexadecimal characters",
+        ),
+        (
+            lambda: Config(rules={"TS999": RuleConfig()}),
+            "unknown rule id in rules",
+        ),
+        (lambda: RuleConfig(enabled="yes"), "enabled must be a boolean"),
+        (lambda: RuleConfig(severity="high"), "severity must be a Severity"),
+    ],
+)
+def test_direct_config_rejects_invalid_resolved_values(
+    factory: Callable[[], object], message: str
+) -> None:
+    with pytest.raises(ConfigError, match=message):
+        factory()
 
 
 def test_config_mapping_supports_rule_policy() -> None:

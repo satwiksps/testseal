@@ -21,9 +21,13 @@ regeneration, and suspicious mocks.
 ```
 
 ```text
-[HIGH] TS003 tests/test_checkout.py:42:5 - Assertion weakened
-  A precise equality assertion became a truthiness assertion.
-  Fingerprint: 6c48d147cbe59f553e224d7d
+[HIGH] TS003 tests/test_totals.py:10:1 - Assertion weakened
+  A specific equality assertion was replaced by a truthy/non-null check
+  Evidence: assert total == Decimal("19.99")  ->  assert total
+  Fingerprint: 3c056c0da89673cd1a42eacc
+  Fix: Assert the specific expected value, type, relationship, or exception.
+
+TestSeal: 1 finding(s) in 1 changed file(s) (high 1, medium 0, low 0).
 ```
 
 ## What TestSeal provides
@@ -55,9 +59,11 @@ regeneration, and suspicious mocks.
 
 ```bash
 python -m pip install testseal
+testseal demo
 testseal scan
 ```
 
+The demo is offline and does not read the current repository or configuration.
 The default scan checks working-tree and non-ignored untracked changes. It is
 advisory and exits successfully even when findings are present. Set a threshold
 only after reviewing representative results:

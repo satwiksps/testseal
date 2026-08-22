@@ -2,8 +2,11 @@ import { CopyButton } from "./components/copy-button";
 import { MobileMenu } from "./components/mobile-menu";
 import { DOCUMENTATION_URL, PYPI_URL, REPOSITORY_URL } from "./site-config";
 import { getSiteUrl } from "./site-url";
+import packageMetadata from "../package.json";
 
-const RELEASE_REF = "v0.1.0";
+const RELEASE_VERSION = packageMetadata.version;
+const RELEASE_REF = `v${RELEASE_VERSION}`;
+const ACTION_COMMIT = "89a2ab087ad1b93b6cf26ef2851dc44d8712fc02";
 
 const rules = [
   {
@@ -77,7 +80,7 @@ const actionWorkflow = [
   "      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7",
   "        with:",
   '          python-version: "3.12"',
-  "      - uses: satwiksps/testseal@" + RELEASE_REF,
+  "      - uses: satwiksps/testseal@" + ACTION_COMMIT + " # " + RELEASE_REF,
   "        with:",
   "          fail-on: high",
 ].join("\n");
@@ -89,7 +92,6 @@ const integrations = [
     description: "Run the same analyzer before opening a pull request.",
     file: "terminal",
     command: "testseal scan --base origin/main --head HEAD",
-    copyable: true,
   },
   {
     name: "pre-commit",
@@ -99,11 +101,10 @@ const integrations = [
     command: [
       "repos:",
       "  - repo: https://github.com/satwiksps/testseal",
-      "    rev: v0.1.0",
+      "    rev: " + RELEASE_REF,
       "    hooks:",
       "      - id: testseal",
     ].join("\n"),
-    copyable: true,
   },
   {
     name: "GitHub Actions",
@@ -111,13 +112,12 @@ const integrations = [
     description: "Install bundled source and annotate the exact changed lines.",
     file: ".github/workflows/testseal.yml",
     command: actionWorkflow,
-    copyable: true,
   },
 ] as const;
 
 const installCommand = [
   "python -m pip install testseal",
-  "testseal scan --base origin/main --head HEAD",
+  "testseal demo",
 ].join("\n");
 
 const ruleReferenceUrl = DOCUMENTATION_URL + "en/latest/rules/";
@@ -140,7 +140,7 @@ export default function Home() {
     url: siteUrl,
     license: "https://www.apache.org/licenses/LICENSE-2.0",
     codeRepository: REPOSITORY_URL,
-    softwareVersion: "0.1.0",
+    softwareVersion: RELEASE_VERSION,
     description:
       "Deterministic test-integrity checks for Python and pytest diffs.",
   };
@@ -168,7 +168,7 @@ export default function Home() {
             </span>
             <span>TestSeal</span>
             <span className="hidden font-mono text-[10px] font-medium text-zinc-400 sm:inline">
-              v0.1.0
+              {RELEASE_REF}
             </span>
           </a>
 
@@ -278,12 +278,12 @@ export default function Home() {
                       <div className="grid min-w-[590px] grid-cols-[44px_24px_1fr] border-y border-blue-400/10 bg-blue-400/[0.025] px-3 text-zinc-400 sm:px-5">
                         <span>8</span>
                         <span />
-                        <code>def test_discount_total():</code>
+                        <code>    order = Order(items=[Item(price=Decimal(&quot;19.99&quot;))])</code>
                       </div>
                       <div className="grid min-w-[590px] grid-cols-[44px_24px_1fr] px-3 text-zinc-400 sm:px-5">
                         <span>9</span>
                         <span />
-                        <code>    total = calculate_total(cart)</code>
+                        <code>    total = calculate_total(order)</code>
                       </div>
                       <div className="grid min-w-[590px] grid-cols-[44px_24px_1fr] border-y border-rose-400/10 bg-rose-400/[0.06] px-3 text-rose-200 sm:px-5">
                         <span className="text-zinc-400">10</span>
@@ -294,11 +294,6 @@ export default function Home() {
                         <span className="text-zinc-400">10</span>
                         <span className="text-emerald-400">+</span>
                         <code>    assert total</code>
-                      </div>
-                      <div className="grid min-w-[590px] grid-cols-[44px_24px_1fr] px-3 text-zinc-400 sm:px-5">
-                        <span>11</span>
-                        <span />
-                        <code>    assert receipt.currency == &quot;USD&quot;</code>
                       </div>
                     </div>
 
@@ -332,7 +327,7 @@ export default function Home() {
                       </div>
                       <p className="mt-4 text-base font-semibold text-white">Assertion weakened</p>
                       <p className="mt-2 text-sm leading-6 text-zinc-400">
-                        A specific equality check became a truthiness check over the same value.
+                        A specific equality assertion was replaced by a truthy/non-null check.
                       </p>
 
                       <div className="mt-5 rounded-md border border-white/[0.07] bg-black/20">
@@ -340,8 +335,8 @@ export default function Home() {
                           Evidence
                         </div>
                         <div className="space-y-2 px-3 py-3 font-mono text-[10px]">
-                          <code className="block truncate text-rose-300">− total == Decimal(&quot;19.99&quot;)</code>
-                          <code className="block truncate text-emerald-300">+ total</code>
+                          <code className="block truncate text-rose-300">assert total == Decimal(&quot;19.99&quot;)</code>
+                          <code className="block truncate text-emerald-300">assert total</code>
                         </div>
                       </div>
 
@@ -350,7 +345,7 @@ export default function Home() {
                           Review
                         </span>
                         <p className="mt-1.5 text-xs leading-5 text-zinc-400">
-                          Restore a precise comparison or document why the tested contract changed.
+                          Assert the specific expected value, type, relationship, or exception.
                         </p>
                       </div>
                     </div>
@@ -490,11 +485,7 @@ export default function Home() {
                   <div className="mt-5 overflow-hidden rounded-md border border-white/[0.07] bg-black/25">
                     <div className="flex h-9 items-center justify-between border-b border-white/[0.06] px-3">
                       <span className="truncate font-mono text-[10px] text-zinc-400">{integration.file}</span>
-                      {integration.copyable ? (
-                        <CopyButton value={integration.command} label={"Copy " + integration.name + " example"} />
-                      ) : (
-                        <span className="font-mono text-[10px] text-zinc-400">REFERENCE</span>
-                      )}
+                      <CopyButton value={integration.command} label={"Copy " + integration.name + " example"} />
                     </div>
                     <pre className="min-h-24 overflow-x-auto p-3 font-mono text-[11px] leading-5 text-zinc-400">
                       <code>{integration.command}</code>
@@ -568,7 +559,7 @@ export default function Home() {
                   Add a second signal to your next Python review.
                 </h2>
                 <p className="mt-4 text-sm leading-6 text-zinc-400">
-                  Install v0.1.0, evaluate findings in advisory mode, and opt
+                  Install v{RELEASE_VERSION}, evaluate findings in advisory mode, and opt
                   into blocking after measuring your baseline.
                 </p>
               </div>
@@ -623,7 +614,7 @@ export default function Home() {
         </div>
         <div className="mx-auto flex max-w-7xl flex-col gap-1 border-t border-white/[0.05] px-5 py-5 font-mono text-[11px] text-zinc-400 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <span>Apache License 2.0</span>
-          <span>v0.1.0, deterministic and offline</span>
+          <span>{RELEASE_REF}, deterministic and offline</span>
         </div>
       </footer>
 

@@ -2,12 +2,12 @@
 
 ## Supported versions
 
-Security fixes are provided for the latest tagged `0.1.x` release and the
+Security fixes are provided for the latest tagged `1.x` release and the
 default branch.
 
 | Version | Supported |
 | --- | --- |
-| Latest `0.1.x` | Yes |
+| Latest `1.x` | Yes |
 | `main` | Yes |
 | Older releases and forks | No |
 

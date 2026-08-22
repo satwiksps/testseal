@@ -195,6 +195,9 @@ jobs:
       GH_REPO: ${{ github.repository }}
       RELEASE_TAG: ${{ github.ref_name }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: python-dist
@@ -202,5 +205,18 @@ jobs:
       - name: Generate release checksums
         working-directory: dist
         run: sha256sum -- * > SHA256SUMS
-      - name: Create release with generated notes
-        run: gh release create "$RELEASE_TAG" dist/* --verify-tag --generate-notes
+      - name: Extract release notes
+        run: |
+          version="${RELEASE_TAG#v}"
+          awk -v version="$version" '
+            index($0, "## [" version "] - ") == 1 { capture = 1; next }
+            capture && /^## \[/ { exit }
+            capture { print }
+          ' CHANGELOG.md > release-notes.md
+          test -s release-notes.md
+      - name: Create GitHub release
+        run: >-
+          gh release create "$RELEASE_TAG" dist/*
+          --verify-tag
+          --title "TestSeal $RELEASE_TAG"
+          --notes-file release-notes.md

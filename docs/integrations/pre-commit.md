@@ -14,7 +14,7 @@ Add this entry to `.pre-commit-config.yaml`:
 ```yaml
 repos:
   - repo: https://github.com/satwiksps/testseal
-    rev: v0.1.0
+    rev: v1.0.0
     hooks:
       - id: testseal
 ```
@@ -50,7 +50,7 @@ Or set hook-specific arguments:
 ```yaml
 repos:
   - repo: https://github.com/satwiksps/testseal
-    rev: v0.1.0
+    rev: v1.0.0
     hooks:
       - id: testseal
         args: ["--fail-on", "high"]

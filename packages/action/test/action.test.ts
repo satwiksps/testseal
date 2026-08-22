@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { resolve } from 'node:path';
 
-import { findLocalTestSeal, installArgs, runAction, withEventRefs } from '../src/action';
+import { installArgs, runAction, withEventRefs } from '../src/action';
 import { CommandError } from '../src/process';
 import type { ActionInputs } from '../src/types';
 import { FakeCore, FakeRunner, result } from './fakes';
@@ -11,6 +11,7 @@ const cleanReport = JSON.stringify({
   summary: {
     files_scanned: 3,
     finding_count: 0,
+    suppressed_count: 0,
     by_severity: { low: 0, medium: 0, high: 0 },
   },
   findings: [],
@@ -22,6 +23,7 @@ const findingReport = JSON.stringify({
   summary: {
     files_scanned: 2,
     finding_count: 1,
+    suppressed_count: 0,
     by_severity: { low: 0, medium: 1, high: 0 },
   },
   findings: [
@@ -30,10 +32,11 @@ const findingReport = JSON.stringify({
       title: 'Assertion weakened',
       message: 'A strict assertion became permissive.',
       severity: 'medium',
-      confidence: 0.9,
+      confidence: 'high',
       path: 'tests/test_service.py',
       line: 8,
       column: 1,
+      fingerprint: '0123456789abcdef01234567',
     },
   ],
   warnings: [],
@@ -50,13 +53,6 @@ function baseInputs(overrides: Partial<ActionInputs> = {}): ActionInputs {
 }
 
 describe('installation resolution', () => {
-  it('finds the Python project only at the bundle-relative root', () => {
-    const packagePath = resolve('action-archive');
-    expect(
-      findLocalTestSeal(packagePath, (path) => path === resolve(packagePath, 'pyproject.toml')),
-    ).toBe(packagePath);
-  });
-
   it('installs only the source bundled with the action release', () => {
     const workspace = resolve('work');
     const packagePath = workspace;
@@ -167,6 +163,7 @@ describe('runAction', () => {
           summary: {
             files_scanned: 1,
             finding_count: 0,
+            suppressed_count: 0,
             by_severity: { low: 0, medium: 0, high: 0 },
           },
           findings: [],
@@ -248,6 +245,60 @@ describe('runAction', () => {
 
     expect(core.outputs.get('outcome')).toBe('error');
     expect(core.failed.at(-1)).toContain('invalid JSON');
+  });
+
+  it.each([
+    ['missing schema fields', '{}', 'missing schema version'],
+    [
+      'unsupported schema version',
+      JSON.stringify({
+        version: '999',
+        summary: {
+          files_scanned: 0,
+          finding_count: 0,
+          suppressed_count: 0,
+          by_severity: { low: 0, medium: 0, high: 0 },
+        },
+        findings: [],
+      }),
+      "unsupported schema version '999'",
+    ],
+    [
+      'inconsistent summary',
+      JSON.stringify({
+        version: '1',
+        summary: {
+          files_scanned: 1,
+          finding_count: 0,
+          suppressed_count: 0,
+          by_severity: { low: 0, medium: 0, high: 0 },
+        },
+        findings: [
+          {
+            rule_id: 'TS003',
+            title: 'Assertion weakened',
+            message: 'A strict assertion became permissive.',
+            severity: 'high',
+            confidence: 'high',
+            path: 'tests/test_service.py',
+            line: 8,
+            column: 1,
+            fingerprint: '0123456789abcdef01234567',
+          },
+        ],
+      }),
+      'inconsistent summary',
+    ],
+  ])('fails closed on %s', async (_name, report, message) => {
+    const core = new FakeCore({ install: 'false' });
+    const runner = new FakeRunner([result(0, report)]);
+
+    await runAction(core, runner);
+
+    expect(core.outputs.get('outcome')).toBe('error');
+    expect(core.outputs.get('finding-count')).toBeUndefined();
+    expect(core.annotations).toEqual([]);
+    expect(core.failed.at(-1)).toContain(message);
   });
 
   it('stops when installation fails', async () => {

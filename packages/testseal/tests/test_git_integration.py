@@ -130,6 +130,41 @@ def test_revision_scan_uses_merge_base_and_head_blobs(tmp_path: Path) -> None:
     assert [item.rule_id for item in Auditor().audit([change]).findings] == ["TS003"]
 
 
+def test_revision_scan_does_not_read_a_base_blob_for_an_added_binary(
+    tmp_path: Path,
+) -> None:
+    root, _, base = repository(tmp_path)
+    binary = root / "docs" / "logo.png"
+    binary.parent.mkdir()
+    binary.write_bytes(b"\x89PNG\r\n\x1a\n\x00testseal")
+    git(root, "add", "docs/logo.png")
+    git(root, "commit", "-q", "--no-gpg-sign", "--no-verify", "-m", "add image")
+
+    [change] = GitRepository(root).revision_changes(base, "HEAD")
+
+    assert change.old_path is None
+    assert change.new_path == "docs/logo.png"
+    assert change.old_source is None
+    assert change.new_source is not None
+
+
+def test_worktree_scan_does_not_read_a_deleted_binary_file(tmp_path: Path) -> None:
+    root, _, _ = repository(tmp_path)
+    binary = root / "docs" / "logo.png"
+    binary.parent.mkdir()
+    binary.write_bytes(b"\x89PNG\r\n\x1a\n\x00testseal")
+    git(root, "add", "docs/logo.png")
+    git(root, "commit", "-q", "--no-gpg-sign", "--no-verify", "-m", "add image")
+    binary.unlink()
+
+    [change] = GitRepository(root).working_changes(paths=["docs/logo.png"])
+
+    assert change.old_path == "docs/logo.png"
+    assert change.new_path is None
+    assert change.old_source is not None
+    assert change.new_source is None
+
+
 def test_worktree_scan_decodes_git_quoted_unicode_path(tmp_path: Path) -> None:
     root, _, _ = repository(tmp_path)
     unicode_file = root / "tests" / "test_café.py"
@@ -248,6 +283,25 @@ def test_cli_accepts_head_for_worktree_and_base_modes(tmp_path: Path) -> None:
         )
         assert code == 0
         assert json.loads(stdout.getvalue())["summary"]["files_scanned"] == 0
+
+
+def test_cli_head_selects_a_nonzero_worktree_baseline(tmp_path: Path) -> None:
+    root, test_file, base = repository(tmp_path)
+    test_file.write_text(NEW, encoding="utf-8")
+    git(root, "add", "tests/test_value.py")
+    git(root, "commit", "-q", "--no-gpg-sign", "--no-verify", "-m", "weaken test")
+    stdout = StringIO()
+
+    code = main(
+        ["scan", "--repo", str(root), "--head", base, "--format", "json"],
+        stdout=stdout,
+        stderr=StringIO(),
+    )
+
+    payload = json.loads(stdout.getvalue())
+    assert code == 0
+    assert payload["summary"]["files_scanned"] == 1
+    assert [finding["rule_id"] for finding in payload["findings"]] == ["TS003"]
 
 
 @pytest.mark.parametrize("revision_argument", ["--head=", "--base="])

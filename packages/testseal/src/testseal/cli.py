@@ -5,7 +5,9 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Sequence
+from contextlib import suppress
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import TextIO
 
 from . import __version__
@@ -13,6 +15,18 @@ from .auditor import Auditor
 from .config import ConfigError, load_config
 from .diff import DiffError, GitRepository, filter_changes, parse_unified_diff
 from .reporters import render
+
+_DEMO_DIFF = """\
+diff --git a/tests/test_totals.py b/tests/test_totals.py
+index 1111111..2222222 100644
+--- a/tests/test_totals.py
++++ b/tests/test_totals.py
+@@ -8,3 +8,3 @@ def test_calculate_total():
+     order = Order(items=[Item(price=Decimal("19.99"))])
+     total = calculate_total(order)
+-    assert total == Decimal("19.99")
++    assert total
+"""
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -24,6 +38,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--version", action="version", version=f"%(prog)s {__version__}"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser(
+        "demo",
+        help="run the analyzer on a built-in assertion-weakening example",
+        description=(
+            "Run the analyzer on a built-in assertion-weakening example without "
+            "reading Git, configuration, or the network."
+        ),
+    )
     scan = subparsers.add_parser("scan", help="audit a Git or unified diff")
     source = scan.add_mutually_exclusive_group()
     source.add_argument(
@@ -73,6 +95,12 @@ def _read_diff(path: str, stdin: TextIO) -> str:
         raise DiffError(f"cannot read diff {path}: {exc}") from exc
 
 
+def _run_demo(*, stdout: TextIO) -> int:
+    result = Auditor().audit(parse_unified_diff(_DEMO_DIFF))
+    stdout.write(render(result, "text"))
+    return 0
+
+
 def _run_scan(args: argparse.Namespace, *, stdin: TextIO, stdout: TextIO) -> int:
     if args.head is not None and (args.staged or args.diff is not None):
         mode = "--staged" if args.staged else "--diff"
@@ -99,10 +127,23 @@ def _run_scan(args: argparse.Namespace, *, stdin: TextIO, stdout: TextIO) -> int
     report = render(result, args.format)
     if args.output:
         output = Path(args.output)
+        temporary: Path | None = None
         try:
             output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(report, encoding="utf-8")
+            with NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                dir=output.parent,
+                prefix=f".{output.name}.",
+                delete=False,
+            ) as handle:
+                temporary = Path(handle.name)
+                handle.write(report)
+            temporary.replace(output)
         except OSError as exc:
+            if temporary is not None:
+                with suppress(OSError):
+                    temporary.unlink()
             raise DiffError(f"cannot write report {output}: {exc}") from exc
     else:
         stdout.write(report)
@@ -124,10 +165,9 @@ def main(
     stderr = stderr or sys.stderr
     try:
         args = parser.parse_args(argv)
-        if args.command == "scan":
-            return _run_scan(args, stdin=stdin, stdout=stdout)
-        parser.error(f"unknown command: {args.command}")
+        if args.command == "demo":
+            return _run_demo(stdout=stdout)
+        return _run_scan(args, stdin=stdin, stdout=stdout)
     except (ConfigError, DiffError, ValueError) as exc:
         stderr.write(f"testseal: error: {exc}\n")
         return 2
-    return 2

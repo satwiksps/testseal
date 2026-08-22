@@ -25,6 +25,7 @@ describe('parseReport', () => {
         summary: {
           files_scanned: 4,
           finding_count: 1,
+          suppressed_count: 2,
           by_severity: { low: 0, medium: 0, high: 1 },
         },
         findings: [
@@ -33,7 +34,7 @@ describe('parseReport', () => {
             title: 'Assertion removed',
             message: 'The assertion disappeared.',
             severity: 'high',
-            confidence: 0.98,
+            confidence: 'high',
             path: 'tests/test_api.py',
             line: 20,
             column: 5,
@@ -41,7 +42,7 @@ describe('parseReport', () => {
             evidence: 'assert value == 42 -> assert value',
             remediation: 'Restore the precise assertion.',
             help_uri: 'https://example.test/TS001',
-            fingerprint: 'abc',
+            fingerprint: '0123456789abcdef01234567',
           },
         ],
         warnings: ['tests/broken.py could not be parsed'],
@@ -51,12 +52,12 @@ describe('parseReport', () => {
     expect(report.summary).toEqual({
       filesScanned: 4,
       findingCount: 1,
-      suppressedCount: 0,
+      suppressedCount: 2,
       bySeverity: { low: 0, medium: 0, high: 1 },
     });
     expect(report.findings[0]).toMatchObject({
       ruleId: 'TS001',
-      confidence: 0.98,
+      confidence: 'high',
       line: 20,
       endLine: 21,
       evidence: 'assert value == 42 -> assert value',
@@ -66,32 +67,27 @@ describe('parseReport', () => {
     expect(report.warnings).toEqual(['tests/broken.py could not be parsed']);
   });
 
-  it('derives missing summary values and tolerates legacy aliases', () => {
-    const report = parseReport(
-      JSON.stringify({
-        summary: { count: 2 },
-        findings: [
-          { rule: 'A', description: 'a', severity: 'warning', file: 'one.py', start_line: 2 },
-          { id: 'B', title: 'b', severity: 'notice', file: 'two.py' },
-        ],
-      }),
-    );
-
-    expect(report.summary).toEqual({
-      filesScanned: 2,
-      findingCount: 2,
-      suppressedCount: 0,
-      bySeverity: { low: 1, medium: 1, high: 0 },
-    });
-    expect(report.findings.map((item) => item.severity)).toEqual(['medium', 'low']);
-  });
-
   it.each([
     ['', 'did not produce'],
     ['not json', 'invalid JSON'],
     ['[]', 'must be an object'],
-    ['{"findings":{}}', "'findings' must be an array"],
-    ['{"findings":[{"rule_id":"A","severity":"critical"}]}', 'unknown severity'],
+    ['{"version":"1","findings":{}}', "'findings' must be an array"],
+    [
+      '{"version":"1","summary":{"files_scanned":1,"finding_count":1,"by_severity":{"low":0,"medium":0,"high":1}},"findings":[{"rule_id":"A","severity":"critical"}]}',
+      "'summary.suppressed_count' must be a non-negative integer",
+    ],
+    [
+      '{"version":"1","summary":{"files_scanned":1,"finding_count":1,"suppressed_count":0,"by_severity":{"low":0,"medium":0,"high":1}},"findings":[{"rule":"A","title":"Legacy","description":"Legacy","severity":"high","confidence":"high","file":"test.py","line":1,"column":1,"fingerprint":"abc"}]}',
+      'missing a rule_id',
+    ],
+    [
+      '{"version":"1","summary":{"files_scanned":1,"finding_count":1,"suppressed_count":0,"by_severity":{"low":0,"medium":0,"high":1}},"findings":[{"rule_id":"TS001","title":"Assertion removed","message":"Removed","severity":"high","confidence":"high","path":"tests/test.py","line":1,"column":1,"fingerprint":"abc"}]}',
+      "field 'fingerprint' must contain 24 lowercase hexadecimal characters",
+    ],
+    [
+      '{"version":"1","summary":{"files_scanned":1,"finding_count":1,"suppressed_count":0,"by_severity":{"low":0,"medium":0,"high":1}},"findings":[{"rule_id":"TS001","title":"Assertion removed","message":"Removed","severity":"high","confidence":"high","path":"../outside.py","line":1,"column":1,"fingerprint":"0123456789abcdef01234567"}]}',
+      "field 'path' must be a repository-relative forward-slash path",
+    ],
   ])('rejects malformed reports', (value, message) => {
     expect(() => parseReport(value)).toThrow(message);
     expect(() => parseReport(value)).toThrow(ReportError);

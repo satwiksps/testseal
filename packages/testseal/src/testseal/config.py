@@ -62,6 +62,12 @@ class RuleConfig:
     enabled: bool = True
     severity: Severity | None = None
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.enabled, bool):
+            raise ConfigError("rules.enabled must be a boolean")
+        if self.severity is not None and not isinstance(self.severity, Severity):
+            raise ConfigError("rules.severity must be a Severity or None")
+
 
 @dataclass(frozen=True, slots=True)
 class Config:
@@ -76,6 +82,62 @@ class Config:
     disabled_rules: frozenset[str] = frozenset()
     ignore_fingerprints: frozenset[str] = frozenset()
     rules: Mapping[str, RuleConfig] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if self.fail_on is not None and not isinstance(self.fail_on, Severity):
+            raise ConfigError("fail_on must be a Severity or None")
+        for name in ("include", "exclude", "test_patterns", "source_roots"):
+            value = getattr(self, name)
+            if not isinstance(value, tuple) or not all(
+                isinstance(item, str) for item in value
+            ):
+                raise ConfigError(f"{name} must be a tuple of strings")
+        if not isinstance(self.guarding_tests, Mapping):
+            raise ConfigError("guarding_tests must be a mapping")
+        for source_pattern, test_patterns in self.guarding_tests.items():
+            if (
+                not isinstance(source_pattern, str)
+                or not isinstance(test_patterns, tuple)
+                or not all(isinstance(item, str) for item in test_patterns)
+            ):
+                raise ConfigError(
+                    f"guarding_tests.{source_pattern} must be a tuple of strings"
+                )
+        if not isinstance(self.disabled_rules, frozenset):
+            raise ConfigError("disabled_rules must be a frozenset of rule IDs")
+        invalid_disabled = [
+            item
+            for item in self.disabled_rules
+            if not isinstance(item, str) or item not in KNOWN_RULE_IDS
+        ]
+        if invalid_disabled:
+            raise ConfigError(
+                f"unknown rule id in disabled_rules: {invalid_disabled[0]!r}"
+            )
+        if not isinstance(self.ignore_fingerprints, frozenset):
+            raise ConfigError("ignore_fingerprints must be a frozenset")
+        invalid_fingerprints = [
+            item
+            for item in self.ignore_fingerprints
+            if not isinstance(item, str)
+            or re.fullmatch(r"[0-9a-fA-F]{24}", item) is None
+        ]
+        if invalid_fingerprints:
+            raise ConfigError(
+                "ignore_fingerprints entries must be exactly 24 hexadecimal characters"
+            )
+        object.__setattr__(
+            self,
+            "ignore_fingerprints",
+            frozenset(item.lower() for item in self.ignore_fingerprints),
+        )
+        if not isinstance(self.rules, Mapping):
+            raise ConfigError("rules must be a mapping")
+        for rule_id, override in self.rules.items():
+            if rule_id not in KNOWN_RULE_IDS:
+                raise ConfigError(f"unknown rule id in rules: {rule_id!r}")
+            if not isinstance(override, RuleConfig):
+                raise ConfigError(f"rules.{rule_id} must be a RuleConfig")
 
     def includes_path(self, path: str) -> bool:
         return matches_path(path, self.include) and not matches_path(path, self.exclude)

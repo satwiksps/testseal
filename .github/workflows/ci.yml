@@ -101,7 +101,20 @@ jobs:
       - name: Verify the self-installing pre-commit hook
         run: |
           python -m pre_commit validate-manifest
-          python -m pre_commit try-repo . testseal --all-files --verbose
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("packages/testseal/tests/test_rules.py")
+          source = path.read_text(encoding="utf-8")
+          precise = '    assert result.findings[0].evidence == "assert valid"\n'
+          weakened = "    assert result.findings[0].evidence\n"
+          if source.count(precise) != 1:
+              raise SystemExit("pre-commit smoke-test fixture changed")
+          path.write_text(source.replace(precise, weakened), encoding="utf-8")
+          PY
+          git add packages/testseal/tests/test_rules.py
+          python -m pre_commit try-repo . testseal --verbose 2>&1 | tee /tmp/testseal-hook-output.txt
+          grep -q "TS003" /tmp/testseal-hook-output.txt
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: python-dist
@@ -170,8 +183,8 @@ jobs:
       - name: Exercise the public Action entry point
         uses: ./
         with:
-          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
-          head: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
+          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'push' && github.event.before || '' }}
+          head: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event_name == 'push' && github.sha || '' }}
           fail-on: never
 
   site:

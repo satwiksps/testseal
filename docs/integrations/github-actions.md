@@ -36,7 +36,7 @@ jobs:
         with:
           python-version: "3.12"
       - id: testseal
-        uses: satwiksps/testseal@v0.1.0
+        uses: satwiksps/testseal@89a2ab087ad1b93b6cf26ef2851dc44d8712fc02 # v0.1.0
         with:
           fail-on: high
 ```
@@ -71,7 +71,7 @@ to `high`. See the [adoption guide](../getting-started/adoption.md).
 The `paths` input accepts one repository path per line:
 
 ```yaml
-- uses: satwiksps/testseal@v0.1.0
+- uses: satwiksps/testseal@89a2ab087ad1b93b6cf26ef2851dc44d8712fc02 # v0.1.0
   with:
     paths: |
       services/billing
@@ -83,7 +83,7 @@ Paths narrow the Git diff. Repository include and exclude policy still applies.
 ## Use an explicit configuration
 
 ```yaml
-- uses: satwiksps/testseal@v0.1.0
+- uses: satwiksps/testseal@89a2ab087ad1b93b6cf26ef2851dc44d8712fc02 # v0.1.0
   with:
     config: config/testseal-strict.toml
 ```
@@ -99,7 +99,7 @@ core at the same version.
 If a controlled runner image already contains the matching version:
 
 ```yaml
-- uses: satwiksps/testseal@v0.1.0
+- uses: satwiksps/testseal@89a2ab087ad1b93b6cf26ef2851dc44d8712fc02 # v0.1.0
   with:
     install: false
     python-command: /opt/testseal/bin/python
@@ -112,7 +112,7 @@ through a shell and cannot contain command-line flags.
 
 ```yaml
 - id: testseal
-  uses: satwiksps/testseal@v0.1.0
+  uses: satwiksps/testseal@89a2ab087ad1b93b6cf26ef2851dc44d8712fc02 # v0.1.0
 
 - name: Print TestSeal summary
   if: always()

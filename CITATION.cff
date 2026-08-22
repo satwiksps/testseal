@@ -10,8 +10,8 @@ authors:
 repository-code: "https://github.com/satwiksps/testseal"
 url: "https://testseal-integrity.vercel.app"
 license: "Apache-2.0"
-version: "0.1.0"
-date-released: "2026-08-16"
+version: "1.0.0"
+date-released: "2026-08-22"
 keywords:
   - "pytest"
   - "test integrity"

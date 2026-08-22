@@ -12,11 +12,11 @@ format does not change detection or exit behavior.
 Text is the default format:
 
 ```text
-[HIGH] TS003 tests/test_checkout.py:42:5 - Assertion weakened
-  A precise equality assertion became a truthiness assertion.
-  Evidence: assert total == Decimal("19.99") -> assert total
-  Fingerprint: 6c48d147cbe59f553e224d7d
-  Fix: Restore a precise behavioral assertion.
+[HIGH] TS003 tests/test_totals.py:10:1 - Assertion weakened
+  A specific equality assertion was replaced by a truthy/non-null check
+  Evidence: assert total == Decimal("19.99")  ->  assert total
+  Fingerprint: 3c056c0da89673cd1a42eacc
+  Fix: Assert the specific expected value, type, relationship, or exception.
 
 TestSeal: 1 finding(s) in 1 changed file(s) (high 1, medium 0, low 0).
 ```
@@ -46,15 +46,15 @@ version, not the TestSeal package version.
     {
       "rule_id": "TS003",
       "title": "Assertion weakened",
-      "message": "A precise equality assertion became a truthiness assertion.",
+      "message": "A specific equality assertion was replaced by a truthy/non-null check",
       "severity": "high",
       "confidence": "high",
-      "path": "tests/test_checkout.py",
-      "line": 42,
-      "column": 5,
-      "fingerprint": "6c48d147cbe59f553e224d7d",
-      "evidence": "assert total == Decimal(\"19.99\") -> assert total",
-      "remediation": "Restore a precise behavioral assertion."
+      "path": "tests/test_totals.py",
+      "line": 10,
+      "column": 1,
+      "fingerprint": "3c056c0da89673cd1a42eacc",
+      "evidence": "assert total == Decimal(\"19.99\")  ->  assert total",
+      "remediation": "Assert the specific expected value, type, relationship, or exception."
     }
   ]
 }

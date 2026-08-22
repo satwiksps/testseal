@@ -224,6 +224,8 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
     old_remaining = 0
     new_remaining = 0
     saw_old_header = False
+    saw_new_header = False
+    current_has_content = False
 
     def incomplete_hunk_message() -> str:
         path = current.path if current is not None else "<unknown>"
@@ -231,6 +233,10 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
             f"incomplete hunk for {path!r}: expected {old_remaining} more old "
             f"line(s) and {new_remaining} more new line(s)"
         )
+
+    def incomplete_file_message() -> str:
+        path = current.path if current is not None else "<unknown>"
+        return f"incomplete file diff for {path!r}: no change content"
 
     for raw in text.splitlines():
         if in_hunk and current is not None:
@@ -274,16 +280,50 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
 
         header = _git_header_paths(raw)
         if header is not None:
+            if current is not None and not current_has_content:
+                raise DiffError(incomplete_file_message())
             current = ChangedFile(*header)
             files.append(current)
             saw_old_header = False
+            saw_new_header = False
+            current_has_content = False
+            continue
+
+        if current is not None and raw.startswith("new file mode "):
+            current.old_path = None
+            current_has_content = True
+            continue
+
+        if current is not None and raw.startswith("deleted file mode "):
+            current.new_path = None
+            current_has_content = True
+            continue
+
+        if current is not None and raw.startswith(
+            (
+                "old mode ",
+                "new mode ",
+                "rename from ",
+                "rename to ",
+                "copy from ",
+                "copy to ",
+                "Binary files ",
+                "GIT binary patch",
+                "Submodule ",
+            )
+        ):
+            current_has_content = True
             continue
 
         if raw.startswith("--- "):
             path = _clean_header_path(raw[4:])
             if current is None or saw_old_header:
+                if current is not None and not current_has_content:
+                    raise DiffError(incomplete_file_message())
                 current = ChangedFile(path, None)
                 files.append(current)
+                saw_new_header = False
+                current_has_content = False
             else:
                 current.old_path = path
             saw_old_header = True
@@ -295,6 +335,7 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
                 files.append(current)
             else:
                 current.new_path = path
+            saw_new_header = True
             in_hunk = False
             continue
 
@@ -302,6 +343,9 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
         if hunk:
             if current is None:
                 raise DiffError("encountered a hunk before a file header")
+            if not saw_old_header or not saw_new_header:
+                raise DiffError(incomplete_file_message())
+            current_has_content = True
             old_line = int(hunk.group(1))
             new_line = int(hunk.group(3))
             old_remaining = int(hunk.group(2) or "1")
@@ -311,7 +355,12 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
 
     if in_hunk:
         raise DiffError(incomplete_hunk_message())
-    return [item for item in files if item.old_path or item.new_path]
+    if current is not None and not current_has_content:
+        raise DiffError(incomplete_file_message())
+    changes = [item for item in files if item.old_path or item.new_path]
+    if text.strip() and not changes:
+        raise DiffError("input does not contain a unified diff")
+    return changes
 
 
 def make_unified_diff(path: str, old_source: str, new_source: str) -> str:
@@ -350,7 +399,7 @@ class GitRepository:
             raise DiffError(f"not a Git repository: {self.root}")
         self.root = Path(discovered)
 
-    def _run(self, *args: str, allow_failure: bool = False) -> str:
+    def _run(self, *args: str) -> str:
         try:
             process = subprocess.run(
                 ["git", "-C", str(self.root), *args],
@@ -359,7 +408,7 @@ class GitRepository:
             )
         except OSError as exc:
             raise DiffError(f"cannot execute Git: {exc}") from exc
-        if process.returncode and not allow_failure:
+        if process.returncode:
             detail = process.stderr.decode("utf-8", errors="replace").strip()
             raise DiffError(
                 f"git {' '.join(args)} failed: {detail or process.returncode}"

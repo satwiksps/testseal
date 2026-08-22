@@ -154,5 +154,6 @@ failure thresholds.
 - The JSON schema version is the stable machine-readable contract.
 - Exported package-root names are the supported Python surface.
 - Rule IDs are stable integration keys.
-- Internal modules and normalized Git data structures can change within 0.x.
+- Internal modules and normalized Git data structures are not compatibility
+  surfaces.
 - Callers should preserve warnings and handle configuration or diff errors.

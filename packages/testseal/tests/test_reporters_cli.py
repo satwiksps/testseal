@@ -4,6 +4,7 @@ import json
 from io import StringIO
 from pathlib import Path
 
+import pytest
 from testseal import Auditor, __version__
 from testseal.cli import main
 from testseal.config import config_from_mapping
@@ -34,6 +35,18 @@ def test_json_report_has_versioned_public_shape() -> None:
     assert finding["rule_id"] == "TS001"
     assert finding["severity"] == "high"
     assert finding["confidence"] == "high"
+
+
+def test_json_report_preserves_parse_warnings() -> None:
+    payload = json.loads(
+        render_json(
+            AuditResult(
+                files_scanned=1, parse_warnings=["tests/broken.py failed to parse"]
+            )
+        )
+    )
+
+    assert payload["warnings"] == ["tests/broken.py failed to parse"]
 
 
 def test_text_report_is_actionable() -> None:
@@ -186,6 +199,115 @@ def test_cli_fail_threshold_returns_one() -> None:
     )
 
 
+def test_cli_demo_is_config_independent_outside_a_repository(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "testseal.toml").write_text(
+        '[testseal]\ndisabled_rules = ["TS003"]\n', encoding="utf-8"
+    )
+    monkeypatch.chdir(tmp_path)
+    stdout = StringIO()
+
+    code = main(["demo"], stdout=stdout, stderr=StringIO())
+
+    assert code == 0
+    assert stdout.getvalue() == (
+        "[HIGH] TS003 tests/test_totals.py:10:1 - Assertion weakened\n"
+        "  A specific equality assertion was replaced by a truthy/non-null check\n"
+        '  Evidence: assert total == Decimal("19.99")  ->  assert total\n'
+        "  Fingerprint: 3c056c0da89673cd1a42eacc\n"
+        "  Fix: Assert the specific expected value, type, relationship, or exception.\n"
+        "\n"
+        "TestSeal: 1 finding(s) in 1 changed file(s) "
+        "(high 1, medium 0, low 0).\n"
+    )
+
+
+def test_cli_failed_atomic_replace_preserves_existing_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output = tmp_path / "report.txt"
+    previous = "previous report\n"
+    output.write_text(previous, encoding="utf-8")
+    patch = make_unified_diff(
+        "tests/test_x.py",
+        "def test_x():\n    assert value\n",
+        "def test_x():\n    pass\n",
+    )
+
+    def fail_replace(source: Path, target: str | Path) -> Path:
+        assert Path(target) == output
+        assert output.read_text(encoding="utf-8") == previous
+        raise OSError("simulated replacement failure")
+
+    monkeypatch.setattr(Path, "replace", fail_replace)
+    stderr = StringIO()
+    code = main(
+        ["scan", "--diff", "-", "--output", str(output)],
+        stdin=StringIO(patch),
+        stdout=StringIO(),
+        stderr=stderr,
+    )
+
+    assert code == 2
+    assert output.read_text(encoding="utf-8") == previous
+    assert "cannot write report" in stderr.getvalue()
+    assert "simulated replacement failure" in stderr.getvalue()
+    assert list(tmp_path.iterdir()) == [output]
+
+
+def test_cli_output_writes_the_rendered_report(tmp_path: Path) -> None:
+    output = tmp_path / "reports" / "testseal.json"
+    patch = make_unified_diff(
+        "tests/test_x.py",
+        "def test_x():\n    assert value\n",
+        "def test_x():\n    pass\n",
+    )
+    stdout = StringIO()
+
+    code = main(
+        ["scan", "--diff", "-", "--format", "json", "--output", str(output)],
+        stdin=StringIO(patch),
+        stdout=stdout,
+        stderr=StringIO(),
+    )
+
+    assert code == 0
+    assert stdout.getvalue() == ""
+    assert (
+        json.loads(output.read_text(encoding="utf-8"))["summary"]["finding_count"] == 1
+    )
+
+
+def test_cli_filters_an_external_diff_by_positional_path() -> None:
+    patch = (
+        make_unified_diff(
+            "tests/test_one.py",
+            "def test_one():\n    assert one\n",
+            "def test_one():\n    pass\n",
+        )
+        + "\n"
+        + make_unified_diff(
+            "tests/test_two.py",
+            "def test_two():\n    assert two\n",
+            "def test_two():\n    pass\n",
+        )
+    )
+    stdout = StringIO()
+
+    code = main(
+        ["scan", "--diff", "-", "--format", "json", "tests/test_one.py"],
+        stdin=StringIO(patch),
+        stdout=stdout,
+        stderr=StringIO(),
+    )
+
+    payload = json.loads(stdout.getvalue())
+    assert code == 0
+    assert payload["summary"]["files_scanned"] == 1
+    assert [finding["path"] for finding in payload["findings"]] == ["tests/test_one.py"]
+
+
 def test_cli_piped_diff_detects_canonical_assertion_downgrade() -> None:
     patch = make_unified_diff(
         "tests/test_x.py",
@@ -266,6 +388,22 @@ def test_cli_truncated_diff_returns_operational_error() -> None:
     )
     assert code == 2
     assert "testseal: error: incomplete hunk" in stderr.getvalue()
+
+
+def test_cli_non_diff_input_returns_an_operational_error() -> None:
+    stdout = StringIO()
+    stderr = StringIO()
+
+    code = main(
+        ["scan", "--diff", "-", "--fail-on", "high"],
+        stdin=StringIO("this is not a unified diff\n"),
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    assert code == 2
+    assert stdout.getvalue() == ""
+    assert "does not contain a unified diff" in stderr.getvalue()
 
 
 def test_cli_non_string_rule_severity_is_a_config_error(tmp_path: Path) -> None:

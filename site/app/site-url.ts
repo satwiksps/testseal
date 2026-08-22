@@ -1,11 +1,20 @@
 const LOCAL_SITE_URL = "http://localhost:3000";
+const PRODUCTION_SITE_URL = "https://testseal-integrity.vercel.app";
 
 function normalizeSiteUrl(value: string): string {
   const candidate = value.trim();
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(candidate) && !/^https?:\/\//i.test(candidate)) {
+    throw new Error("The public site URL must use http or https.");
+  }
   const withProtocol = /^https?:\/\//i.test(candidate)
     ? candidate
     : `https://${candidate}`;
-  const url = new URL(withProtocol);
+  let url: URL;
+  try {
+    url = new URL(withProtocol);
+  } catch {
+    throw new Error("The public site URL must be a valid http or https URL.");
+  }
 
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     throw new Error("The public site URL must use http or https.");
@@ -28,5 +37,5 @@ export function getSiteUrl(): string {
     );
   }
 
-  return LOCAL_SITE_URL;
+  return process.env.NODE_ENV === "production" ? PRODUCTION_SITE_URL : LOCAL_SITE_URL;
 }

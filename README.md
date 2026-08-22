@@ -23,10 +23,21 @@ repository it scans.
 + assert total
 ```
 
+After [installing TestSeal](#quick-start), run the built-in example from any
+directory. It does not read Git, configuration, or the network:
+
+```bash
+testseal demo
+```
+
 ```text
-[HIGH] TS003 tests/test_checkout.py:42:5 - Assertion weakened
-  A precise equality assertion became a truthiness assertion.
-  Fingerprint: 6c48d147cbe59f553e224d7d
+[HIGH] TS003 tests/test_totals.py:10:1 - Assertion weakened
+  A specific equality assertion was replaced by a truthy/non-null check
+  Evidence: assert total == Decimal("19.99")  ->  assert total
+  Fingerprint: 3c056c0da89673cd1a42eacc
+  Fix: Assert the specific expected value, type, relationship, or exception.
+
+TestSeal: 1 finding(s) in 1 changed file(s) (high 1, medium 0, low 0).
 ```
 
 ## Why TestSeal
@@ -37,12 +48,13 @@ valid Python. General code reviewers may notice the downgrade, but their output
 is probabilistic. TestSeal provides a narrow, reproducible signal dedicated to
 how the tests themselves changed.
 
-- **Deterministic:** identical input and configuration produce identical output.
-- **Offline:** zero runtime dependencies, model calls, telemetry, or accounts.
-- **Diff-aware:** compares complete before/after syntax when Git blobs are available.
-- **Safe by design:** reads source and Git data without importing the target project.
-- **Advisory by default:** teams choose when findings should block a workflow.
-- **Portable:** text, versioned JSON, SARIF 2.1.0, pre-commit, and GitHub Actions.
+- Identical input and configuration produce identical output.
+- The Python package has no runtime dependencies, model calls, telemetry, or accounts.
+- Git-backed scans compare complete before/after syntax when both blobs are available.
+- Scans read source and Git data without importing the target project.
+- Findings are advisory unless a failure threshold is configured.
+- Reports are available as text, versioned JSON, and SARIF 2.1.0; integrations are
+  provided for pre-commit and GitHub Actions.
 
 ## Quick start
 
@@ -50,6 +62,7 @@ TestSeal requires Python 3.11 or newer and Git for repository-backed scans:
 
 ```bash
 python -m pip install testseal
+testseal demo
 ```
 
 For an isolated CLI installation:
@@ -59,7 +72,7 @@ uv tool install testseal
 # or: pipx install testseal
 ```
 
-Run it in a Git repository:
+Then run it in a Git repository:
 
 ```bash
 testseal scan
@@ -91,7 +104,7 @@ testseal scan --base origin/main --format json --output testseal-report.json
 testseal scan --base origin/main --format sarif --output testseal-report.sarif
 ```
 
-Run `testseal scan --help` for the complete CLI contract.
+Run `testseal scan --help` to list the available CLI options.
 
 ## Configure policy
 
@@ -106,7 +119,7 @@ source_roots = ["src"]
 disabled_rules = ["TS008"]
 
 # Copy a fingerprint from text, JSON, SARIF, or the Action output after review.
-ignore_fingerprints = ["6c48d147cbe59f553e224d7d"]
+ignore_fingerprints = ["3c056c0da89673cd1a42eacc"]
 
 [testseal.rules.TS006]
 severity = "low"
@@ -127,7 +140,7 @@ The hook installs TestSeal in its own environment and scans the staged diff:
 ```yaml
 repos:
   - repo: https://github.com/satwiksps/testseal
-    rev: v0.1.0
+    rev: v1.0.0
     hooks:
       - id: testseal
         args: ["--fail-on", "high"] # omit to remain advisory
@@ -158,18 +171,19 @@ jobs:
         with:
           python-version: "3.12"
       - id: testseal
-        uses: satwiksps/testseal@v0.1.0
+        uses: satwiksps/testseal@89a2ab087ad1b93b6cf26ef2851dc44d8712fc02 # v0.1.0
         with:
           fail-on: high
 ```
 
 Omit `fail-on` to honor repository configuration. The default `install: true`
-uses only the source bundled with the pinned Action release. Set
+uses only the source bundled with that Action commit. Set
 `install: false` only when the same TestSeal version is already installed in the
 selected Python environment.
 
-Action outputs include `finding-count`, severity counts, `files-scanned`,
-`suppressed-count`, `outcome`, and the complete normalized `result` JSON.
+For accepted CLI reports, Action outputs include `finding-count`, severity counts,
+`files-scanned`, `suppressed-count`, `outcome`, and the normalized `result` JSON.
+Input, installation, process, and rejected-report failures set only `outcome`.
 
 ## Rules
 

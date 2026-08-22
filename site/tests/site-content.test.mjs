@@ -10,17 +10,23 @@ async function source(path) {
 
 test("landing page contains the product promise and all rule IDs", async () => {
   const page = await source("app/page.tsx");
+  const packageMetadata = JSON.parse(await source("package.json"));
 
   assert.match(page, /Catch test weakening/);
   assert.match(page, /before it merges\./);
   assert.match(page, /No LLM/i);
   assert.match(page, /Example TestSeal pull request report/);
+  assert.match(page, /A specific equality assertion was replaced by a truthy\/non-null check/);
+  assert.match(page, /Assert the specific expected value, type, relationship, or exception/);
+  assert.doesNotMatch(page, /test_discount_total|calculate_total\(cart\)|receipt\.currency/);
   assert.match(page, /actions\/setup-python@5fda3b95/);
   assert.match(page, /python-version: "3\.12"/);
   assert.match(page, /<figure/);
-  assert.match(page, /softwareVersion: "0\.1\.0"/);
-  assert.match(page, />\s*v0\.1\.0\s*</);
-  assert.match(page, /satwiksps\/testseal@" \+ RELEASE_REF/);
+  assert.match(packageMetadata.version, /^\d+\.\d+\.\d+$/);
+  assert.match(page, /softwareVersion: RELEASE_VERSION/);
+  assert.match(page, /\{RELEASE_REF\}/);
+  assert.match(page, /const ACTION_COMMIT = "[0-9a-f]{40}"/);
+  assert.match(page, /satwiksps\/testseal@" \+ ACTION_COMMIT \+ " # " \+ RELEASE_REF/);
   assert.doesNotMatch(page, /preview|Roadmap/i);
   for (let index = 1; index <= 8; index += 1) {
     assert.match(page, new RegExp(`TS${String(index).padStart(3, "0")}`));

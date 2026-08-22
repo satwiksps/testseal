@@ -6,18 +6,39 @@ is omitted unless it changes installation or runtime behavior.
 
 ## [Unreleased]
 
-### Changed
-
-- Release automation now confirms that a published wheel is available from
-  PyPI before creating the corresponding GitHub release.
+## [1.0.0] - 2026-08-22
 
 ### Added
 
-- A complete MkDocs Material documentation site for Read the Docs, including
-  installation, adoption, integrations, configuration, output schemas,
-  security, troubleshooting, and contributor references.
-- Strict documentation builds in CI and canonical documentation links in
-  package metadata, SARIF rule help, the README, and the landing site.
+- `testseal demo`, an offline and configuration-independent installation check
+  that runs the real analyzer against a bundled assertion-weakening diff.
+- The MkDocs Material documentation site for installation, adoption,
+  integrations, configuration, report schemas, security, and troubleshooting.
+
+### Changed
+
+- The documented CLI, configuration, package-root Python API, rule IDs, and
+  versioned JSON report are now the supported 1.x compatibility surface.
+- CLI report files are replaced atomically, malformed or incomplete unified
+  diffs fail clearly, and direct `Config` construction validates resolved
+  values.
+- The GitHub Action derives pull-request and merge-queue revisions, accepts
+  only valid schema-version 1 reports, and leaves summary outputs unset on
+  report errors.
+
+### Fixed
+
+- Git diff parsing now handles added and deleted binary files without reading
+  nonexistent blobs and honors an explicit worktree `--head` baseline.
+- Production website builds now publish the canonical URL and release version.
+
+### Security
+
+- Action reports reject unsafe annotation paths, invalid fingerprints, and
+  inconsistent summary counts before any finding output is emitted.
+- Release validation covers Python, Action, website, citation, and changelog
+  versions; publication is confirmed on PyPI before the GitHub release is
+  created.
 
 ## [0.1.0] - 2026-08-16
 
@@ -33,8 +54,8 @@ is omitted unless it changes installation or runtime behavior.
 - Strict TOML policy, per-rule severity overrides, path filters, and opt-in
   failure thresholds.
 - A self-installing pre-commit hook and a bundled Node 24 GitHub Action.
-- Cross-platform CI for Python 3.11 through 3.14, package verification, and a
-  Vercel-hosted project site.
+- CI for Python 3.11 through 3.14 on Linux and Python 3.12 on Windows and macOS,
+  package verification, and a Vercel-hosted project site.
 
 ### Security
 
@@ -45,5 +66,6 @@ is omitted unless it changes installation or runtime behavior.
 - Release automation validates package metadata and publishes artifact
   checksums.
 
-[Unreleased]: https://github.com/satwiksps/testseal/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/satwiksps/testseal/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/satwiksps/testseal/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/satwiksps/testseal/releases/tag/v0.1.0

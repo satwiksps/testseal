@@ -1,5 +1,5 @@
 ---
-description: Complete GitHub Action input, output, event, and outcome contract.
+description: GitHub Action inputs, outputs, events, and outcomes.
 ---
 
 # GitHub Action reference
@@ -8,7 +8,7 @@ description: Complete GitHub Action input, output, event, and outcome contract.
 
 ```yaml
 - id: testseal
-  uses: satwiksps/testseal@v0.1.0
+  uses: satwiksps/testseal@89a2ab087ad1b93b6cf26ef2851dc44d8712fc02 # v0.1.0
   with:
     fail-on: high
 ```
@@ -66,6 +66,9 @@ compatible `testseal` module.
 
 ## Outputs
 
+Summary and `result` outputs are set only after a valid TestSeal report is
+accepted. Errors before that point set only `outcome` to `error`.
+
 | Output | Type | Description |
 | --- | --- | --- |
 | `finding-count` | integer string | Visible finding count |
@@ -75,7 +78,7 @@ compatible `testseal` module.
 | `files-scanned` | integer string | Eligible changed file count |
 | `suppressed-count` | integer string | Fingerprint-suppressed count |
 | `outcome` | string | Normalized Action outcome |
-| `result` | JSON string | Complete normalized JSON report |
+| `result` | JSON string | Normalized JSON report |
 
 GitHub Action outputs are strings when consumed in expressions. Parse numeric
 values with `fromJSON` when numeric comparison is required:
@@ -109,9 +112,9 @@ without a valid warning-bearing report is an error.
 
 ## Annotations
 
-Each finding becomes a source annotation. Severity maps to GitHub annotation
-levels through the Action adapter, and available path, line, column, evidence,
-remediation, and fingerprint data are retained in the message or properties.
+Each finding becomes a source annotation. Severity maps to the annotation level;
+the annotation carries the finding message and any available path, line, and
+column. Evidence, remediation, and fingerprint data remain in the `result` output.
 
 Parse warnings become workflow warnings. Source-derived values are passed
 through the Actions toolkit rather than emitted as workflow command strings.

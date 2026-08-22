@@ -60,7 +60,7 @@ the target project. The Python package has no runtime dependencies.
 Run without a persistent installation:
 
 ```bash
-uvx testseal scan
+uvx testseal demo
 ```
 
 ## Verify the installation
@@ -68,9 +68,11 @@ uvx testseal scan
 ```bash
 testseal --version
 testseal scan --help
+testseal demo
 ```
 
-The command should print the installed version and the scan options. If the
+The commands should print the installed version, list the scan options, and
+report one `TS003` finding from the built-in example. If the
 shell cannot find `testseal`, run it through the interpreter used for
 installation:
 

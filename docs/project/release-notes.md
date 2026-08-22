@@ -12,14 +12,15 @@ distributions are published on [PyPI](https://pypi.org/project/testseal/).
 
 ## Versioning
 
-TestSeal uses semantic version tags such as `v0.1.0`. During 0.x development:
+TestSeal uses semantic version tags such as `v1.0.0`. Within the 1.x series:
 
-- rule IDs retain their documented signal meaning;
+- documented CLI options, configuration keys, package-root Python exports, and
+  rule IDs remain compatible;
 - the JSON report declares an independent schema version;
-- matcher precision, messages, and evidence can improve in minor releases;
-- public package-root Python exports are supported, while internal modules can
-  change;
-- Action and Python core versions are released together.
+- matcher precision, messages, evidence, and fingerprints may change in minor
+  releases without changing a rule's documented meaning;
+- breaking changes to supported interfaces require a new major version;
+- the Action and Python core are released together.
 
 Review release notes before updating a blocking installation.
 
@@ -36,8 +37,8 @@ Review release notes before updating a blocking installation.
 
 The release workflow verifies:
 
-- version agreement between the tag, package, module, Action package, and
-  changelog;
+- version agreement between the tag, Python package, module, Action package,
+  website package, citation metadata, and changelog;
 - the release commit is contained in `main`;
 - Python tests, coverage, lint, formatting, package metadata, and wheel install;
 - TypeScript Action tests, coverage, formatting, types, and committed bundle;

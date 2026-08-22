@@ -84,18 +84,11 @@ function testSealArgs(inputs: ActionInputs): string[] {
   ];
 }
 
-export function findLocalTestSeal(
-  bundledRoot: string = BUNDLED_PROJECT_ROOT,
-  fileExists: FileExists = existsSync,
-): string | undefined {
-  return fileExists(resolve(bundledRoot, 'pyproject.toml')) ? bundledRoot : undefined;
-}
-
 export function installArgs(
   bundledRoot: string = BUNDLED_PROJECT_ROOT,
   fileExists: FileExists = existsSync,
 ): string[] {
-  const localPackage = findLocalTestSeal(bundledRoot, fileExists);
+  const localPackage = fileExists(resolve(bundledRoot, 'pyproject.toml')) ? bundledRoot : undefined;
   if (localPackage === undefined) {
     throw new CommandError(
       'The bundled TestSeal Python package is missing. Pin a complete TestSeal release or set install: false after installing TestSeal yourself.',

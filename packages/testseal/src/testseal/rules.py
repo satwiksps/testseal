@@ -99,10 +99,7 @@ def _stable_dump(node: ast.AST) -> str:
 
 
 def _render(node: ast.AST) -> str:
-    try:
-        return ast.unparse(node)
-    except (ValueError, TypeError):
-        return _stable_dump(node)
+    return ast.unparse(node)
 
 
 def _literal_number(node: ast.AST) -> float | None:

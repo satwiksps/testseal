@@ -1,12 +1,42 @@
 from __future__ import annotations
 
 import pytest
+from testseal import audit_diff
 from testseal.diff import (
     DiffError,
     changes_from_sources,
     make_unified_diff,
     parse_unified_diff,
 )
+
+
+def test_audit_diff_reports_a_canonical_assertion_weakening() -> None:
+    patch = make_unified_diff(
+        "tests/test_value.py",
+        "def test_value():\n    assert value == 1\n",
+        "def test_value():\n    assert value\n",
+    )
+
+    result = audit_diff(patch)
+
+    assert result.files_scanned == 1
+    assert [finding.rule_id for finding in result.findings] == ["TS003"]
+
+
+@pytest.mark.parametrize(
+    "patch",
+    [
+        "--- a/tests/test_value.py\n",
+        "+++ b/tests/test_value.py\n",
+        "--- a/tests/test_value.py\n+++ b/tests/test_value.py\n",
+        "diff --git a/tests/test_value.py b/tests/test_value.py\n",
+        "--- a/tests/test_value.py\n@@ -1 +1 @@\n-old\n+new\n",
+        "+++ b/tests/test_value.py\n@@ -1 +1 @@\n-old\n+new\n",
+    ],
+)
+def test_parse_unified_diff_rejects_incomplete_file_sections(patch: str) -> None:
+    with pytest.raises(DiffError, match="incomplete file diff"):
+        parse_unified_diff(patch)
 
 
 def test_parse_git_diff_tracks_old_and_new_line_numbers() -> None:

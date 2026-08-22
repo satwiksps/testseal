@@ -8,10 +8,13 @@ description: Complete command-line reference for TestSeal.
 
 ```text
 testseal [--version] scan [OPTIONS] [PATH ...]
+testseal [--version] demo
 python -m testseal [--version] scan [OPTIONS] [PATH ...]
+python -m testseal [--version] demo
 ```
 
-TestSeal currently provides one command, `scan`.
+TestSeal provides `demo` for installation verification and `scan` for real
+changes.
 
 ## Global option
 
@@ -22,6 +25,17 @@ Print the installed TestSeal version and exit.
 ```bash
 testseal --version
 ```
+
+## `demo`
+
+Run the analyzer against a built-in assertion-weakening diff:
+
+```bash
+testseal demo
+```
+
+The command prints one `TS003` finding and returns `0`. It does not read Git,
+configuration, files in the current directory, or the network.
 
 ## `scan`
 
@@ -163,7 +177,7 @@ testseal scan --staged -- tests/unit
 
 | Exit | Meaning |
 | --- | --- |
-| `0` | Scan completed and no visible finding reached the threshold |
+| `0` | Demo completed, or a scan completed without reaching its threshold |
 | `1` | At least one visible finding reached the threshold |
 | `2` | Usage, configuration, Git, decoding, parsing in blocking mode, diff validation, or I/O error |
 

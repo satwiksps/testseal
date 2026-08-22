@@ -11,7 +11,7 @@ inputs:
     description: Base Git ref or commit to compare.
     required: false
   head:
-    description: Head Git ref or commit to compare. TestSeal defaults to HEAD.
+    description: Head Git ref or commit. Defaults to an event-derived revision, or HEAD when no supported event revision is available.
     required: false
   staged:
     description: Analyze staged changes instead of the working-tree or ref diff.
@@ -37,21 +37,21 @@ inputs:
 
 outputs:
   finding-count:
-    description: Total number of findings.
+    description: Total number of findings. Set only when a valid report is available.
   high-count:
-    description: Number of high-severity findings.
+    description: Number of high-severity findings. Set only when a valid report is available.
   medium-count:
-    description: Number of medium-severity findings.
+    description: Number of medium-severity findings. Set only when a valid report is available.
   low-count:
-    description: Number of low-severity findings.
+    description: Number of low-severity findings. Set only when a valid report is available.
   files-scanned:
-    description: Number of files scanned.
+    description: Number of files scanned. Set only when a valid report is available.
   suppressed-count:
-    description: Number of findings ignored by fingerprint policy.
+    description: Number of findings ignored by fingerprint policy. Set only when a valid report is available.
   outcome:
     description: Scan outcome (clean, findings, incomplete, threshold-failed, or error).
   result:
-    description: Normalized TestSeal JSON report.
+    description: Normalized TestSeal JSON report. Set only when a valid report is available.
 
 runs:
   using: node24
