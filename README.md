@@ -1,16 +1,26 @@
-# TestSeal
+<h1 align="center">TestSeal</h1>
 
-![TestSeal](https://raw.githubusercontent.com/satwiksps/testseal/main/docs/assets/testseal-banner.svg)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/satwiksps/testseal/main/docs/assets/testseal-banner.svg" alt="TestSeal">
+</p>
 
-[![CI](https://github.com/satwiksps/testseal/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/satwiksps/testseal/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/testseal?logo=pypi&logoColor=white)](https://pypi.org/project/testseal/)
-[![Codecov](https://codecov.io/gh/satwiksps/testseal/graph/badge.svg?branch=main)](https://codecov.io/gh/satwiksps/testseal)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/github/license/satwiksps/testseal)](https://github.com/satwiksps/testseal/blob/main/LICENSE)
+<p align="center"><strong>Deterministic test-integrity checks for Python and pytest diffs.</strong></p>
 
-[Website](https://testseal-integrity.vercel.app) | [Documentation](https://testseal.readthedocs.io/) | [Rule reference](https://testseal.readthedocs.io/en/latest/rules/) | [Architecture](https://testseal.readthedocs.io/en/latest/architecture/) | [Contributing](https://github.com/satwiksps/testseal/blob/main/CONTRIBUTING.md)
+<p align="center">
+  <a href="https://testseal-integrity.vercel.app">Website</a> |
+  <a href="https://testseal.readthedocs.io/">Documentation</a> |
+  <a href="https://testseal.readthedocs.io/en/latest/rules/">Rule reference</a> |
+  <a href="https://testseal.readthedocs.io/en/latest/architecture/">Architecture</a> |
+  <a href="https://github.com/satwiksps/testseal/blob/main/CONTRIBUTING.md">Contributing</a>
+</p>
 
-**Deterministic test-integrity checks for Python and pytest diffs.**
+<p align="center">
+  <a href="https://github.com/satwiksps/testseal/actions/workflows/ci.yml"><img src="https://github.com/satwiksps/testseal/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://pypi.org/project/testseal/"><img src="https://img.shields.io/pypi/v/testseal?logo=pypi&amp;logoColor=white" alt="PyPI"></a>
+  <a href="https://codecov.io/gh/satwiksps/testseal"><img src="https://codecov.io/gh/satwiksps/testseal/graph/badge.svg?branch=main" alt="Codecov"></a>
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&amp;logoColor=white" alt="Python 3.11+"></a>
+  <a href="https://github.com/satwiksps/testseal/blob/main/LICENSE"><img src="https://img.shields.io/github/license/satwiksps/testseal" alt="License"></a>
+</p>
 
 TestSeal compares tests before and after a change and reports concrete weakening
 signals: removed assertions, newly disabled tests, weaker comparisons, wider
