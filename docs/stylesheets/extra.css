@@ -25,6 +25,27 @@ body {
   box-shadow: none;
 }
 
+.md-header__button.md-logo {
+  align-items: center;
+  display: inline-flex;
+  width: auto;
+}
+
+.md-header__button.md-logo svg {
+  display: none;
+}
+
+.md-header__button.md-logo::after {
+  content: "TestSeal";
+  font-size: 0.9rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.md-header__title .md-header__topic {
+  display: none;
+}
+
 .md-typeset h1,
 .md-typeset h2,
 .md-typeset h3 {
