@@ -160,16 +160,7 @@ export default function Home() {
           aria-label="Main navigation"
         >
           <a className="flex items-center gap-2.5 font-semibold tracking-tight" href="#top">
-            <span
-              className="grid size-7 place-items-center rounded-md border border-white/15 bg-white/[0.04] font-mono text-[10px] font-bold text-blue-300"
-              aria-hidden="true"
-            >
-              TS
-            </span>
             <span>TestSeal</span>
-            <span className="hidden font-mono text-[10px] font-medium text-zinc-400 sm:inline">
-              {RELEASE_REF}
-            </span>
           </a>
 
           <div className="hidden items-center gap-7 text-sm text-zinc-400 md:flex">
