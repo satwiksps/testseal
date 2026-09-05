@@ -388,3 +388,38 @@ def test_checkout_cannot_shadow_git_executable(
     monkeypatch.chdir(root)
     changes = GitRepository().working_changes(paths=["tests/test_value.py"])
     assert [item.rule_id for item in Auditor().audit(changes).findings] == ["TS003"]
+
+
+def test_cli_excludes_files_before_source_decoding(tmp_path: Path) -> None:
+    root, test_file, base = repository(tmp_path)
+    excluded = root / ".venv" / "test_broken.py"
+    excluded.parent.mkdir()
+    excluded.write_bytes(b"\xff\xfeinvalid Python encoding")
+    test_file.write_text(NEW, encoding="utf-8")
+
+    def scan(*arguments: str) -> None:
+        stdout, stderr = StringIO(), StringIO()
+        code = main(
+            [
+                "scan",
+                "--repo",
+                str(root),
+                "--format",
+                "json",
+                "--fail-on",
+                "high",
+                *arguments,
+            ],
+            stdout=stdout,
+            stderr=stderr,
+        )
+        assert code == 1, stderr.getvalue()
+        payload = json.loads(stdout.getvalue())
+        assert payload["summary"]["files_scanned"] == 1
+        assert [item["rule_id"] for item in payload["findings"]] == ["TS003"]
+
+    scan()
+    git(root, "add", ".venv/test_broken.py", "tests/test_value.py")
+    scan("--staged")
+    git(root, "commit", "-q", "--no-gpg-sign", "--no-verify", "-m", "weaken")
+    scan("--base", base)

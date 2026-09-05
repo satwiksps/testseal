@@ -108,21 +108,28 @@ def _run_scan(args: argparse.Namespace, *, stdin: TextIO, stdout: TextIO) -> int
 
     head = "HEAD" if args.head is None else args.head
     if args.diff is not None:
-        config_root = args.repo
+        config = load_config(args.config, cwd=args.repo).with_fail_on(args.fail_on)
         changes = filter_changes(
             parse_unified_diff(_read_diff(args.diff, stdin)), args.paths
         )
     else:
         repository = GitRepository(args.repo)
-        config_root = repository.root
+        config = load_config(args.config, cwd=repository.root).with_fail_on(
+            args.fail_on
+        )
         if args.staged:
-            changes = repository.staged_changes(paths=args.paths)
+            changes = repository.staged_changes(
+                paths=args.paths, include=config.includes_path
+            )
         elif args.base is not None:
-            changes = repository.revision_changes(args.base, head, paths=args.paths)
+            changes = repository.revision_changes(
+                args.base, head, paths=args.paths, include=config.includes_path
+            )
         else:
-            changes = repository.working_changes(head=head, paths=args.paths)
+            changes = repository.working_changes(
+                head=head, paths=args.paths, include=config.includes_path
+            )
 
-    config = load_config(args.config, cwd=config_root).with_fail_on(args.fail_on)
     result = Auditor(config).audit(changes)
     report = render(result, args.format)
     if args.output:
@@ -168,6 +175,6 @@ def main(
         if args.command == "demo":
             return _run_demo(stdout=stdout)
         return _run_scan(args, stdin=stdin, stdout=stdout)
-    except (ConfigError, DiffError, ValueError) as exc:
+    except (ConfigError, DiffError, ValueError, OSError) as exc:
         stderr.write(f"testseal: error: {exc}\n")
         return 2

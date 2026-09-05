@@ -9,7 +9,7 @@ import re
 import shutil
 import subprocess
 import tokenize
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -500,11 +500,19 @@ class GitRepository:
         return _decode_source(data, path)
 
     def working_changes(
-        self, *, head: str = "HEAD", paths: Sequence[str] = ()
+        self,
+        *,
+        head: str = "HEAD",
+        paths: Sequence[str] = (),
+        include: Callable[[str], bool] | None = None,
     ) -> list[ChangedFile]:
         head = self._revision(head, label="head")
         patch = self._run("diff", *_DIFF_OPTIONS, head, *self._path_args(paths))
-        files = parse_unified_diff(patch)
+        files = [
+            item
+            for item in parse_unified_diff(patch)
+            if include is None or include(item.path)
+        ]
         for item in files:
             item.old_source = self._blob(head, item.old_path)
             item.new_source = self._worktree_file(item.new_path)
@@ -519,6 +527,8 @@ class GitRepository:
             if not raw_path:
                 continue
             path = raw_path.replace("\\", "/")
+            if include is not None and not include(path):
+                continue
             new_source = self._worktree_file(path)
             if new_source is None:
                 raise DiffError(f"cannot hydrate untracked file {path!r}")
@@ -537,16 +547,30 @@ class GitRepository:
             )
         return files
 
-    def staged_changes(self, *, paths: Sequence[str] = ()) -> list[ChangedFile]:
+    def staged_changes(
+        self,
+        *,
+        paths: Sequence[str] = (),
+        include: Callable[[str], bool] | None = None,
+    ) -> list[ChangedFile]:
         patch = self._run("diff", "--cached", *_DIFF_OPTIONS, *self._path_args(paths))
-        files = parse_unified_diff(patch)
+        files = [
+            item
+            for item in parse_unified_diff(patch)
+            if include is None or include(item.path)
+        ]
         for item in files:
             item.old_source = self._blob("HEAD", item.old_path)
             item.new_source = self._blob(":", item.new_path)
         return files
 
     def revision_changes(
-        self, base: str, head: str = "HEAD", *, paths: Sequence[str] = ()
+        self,
+        base: str,
+        head: str = "HEAD",
+        *,
+        paths: Sequence[str] = (),
+        include: Callable[[str], bool] | None = None,
     ) -> list[ChangedFile]:
         base = self._revision(base, label="base")
         head = self._revision(head, label="head")
@@ -560,7 +584,11 @@ class GitRepository:
             head,
             *self._path_args(paths),
         )
-        files = parse_unified_diff(patch)
+        files = [
+            item
+            for item in parse_unified_diff(patch)
+            if include is None or include(item.path)
+        ]
         for item in files:
             item.old_source = self._blob(merge_base, item.old_path)
             item.new_source = self._blob(head, item.new_path)

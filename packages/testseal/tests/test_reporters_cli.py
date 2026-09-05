@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from io import StringIO
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 import pytest
 from testseal import Auditor, __version__
@@ -431,3 +432,33 @@ def test_cli_rejects_explicit_head_for_diff_and_staged_modes(tmp_path: Path) -> 
         )
         assert code == 2
         assert "--head cannot be combined" in stderr.getvalue()
+
+
+def test_sarif_encodes_special_path_characters_as_a_uri() -> None:
+    path = "tests/test space#percent%question?café.py"
+    result = Auditor().audit(
+        [changes_from_sources(path, "assert value == 42\n", "assert value\n")]
+    )
+    payload = json.loads(render_sarif(result))
+    uri = payload["runs"][0]["results"][0]["locations"][0]["physicalLocation"][
+        "artifactLocation"
+    ]["uri"]
+    assert uri == "tests/test%20space%23percent%25question%3Fcaf%C3%A9.py"
+    assert unquote(uri) == path
+    assert urlsplit(uri).query == urlsplit(uri).fragment == ""
+
+
+@pytest.mark.parametrize("failed_stream", ["stdin", "stdout"])
+def test_cli_stream_failures_return_an_operational_error(failed_stream: str) -> None:
+    class FailingStream(StringIO):
+        def read(self, *args: object, **kwargs: object) -> str:
+            raise OSError("input stream unavailable")
+
+        def write(self, value: str) -> int:
+            raise BrokenPipeError("output pipe closed")
+
+    stderr = StringIO()
+    streams = {"stdin": StringIO(""), "stdout": StringIO()}
+    streams[failed_stream] = FailingStream()
+    assert main(["scan", "--diff", "-"], stderr=stderr, **streams) == 2
+    assert stderr.getvalue().startswith("testseal: error: ")
