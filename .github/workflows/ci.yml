@@ -34,6 +34,8 @@ jobs:
           - os: ubuntu-latest
             python: "3.14"
           - os: windows-latest
+            python: "3.11"
+          - os: windows-latest
             python: "3.12"
           - os: macos-latest
             python: "3.12"
@@ -189,12 +191,16 @@ jobs:
         run: git diff --exit-code -- dist
 
   action-integration:
-    name: Action integration on ${{ matrix.os }}
+    name: ${{ matrix.name }}
     needs: [python, action]
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            name: Action integration
+          - os: windows-latest
+            name: Action integration on Windows
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
