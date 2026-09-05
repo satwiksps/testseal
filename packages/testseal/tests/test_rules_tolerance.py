@@ -14,7 +14,12 @@ from testseal.diff import changes_from_sources
     [("delta", 0.1, 0.001, 1, 1.01), ("places", 2, 6, 1, 1.00001)],
 )
 def test_not_almost_equal_reports_only_relaxed_comparisons(
-    parameter: str, before: float, after: float, left: float, right: float, patch_only: bool
+    parameter: str,
+    before: float,
+    after: float,
+    left: float,
+    right: float,
+    patch_only: bool,
 ) -> None:
     case = unittest.TestCase()
     with pytest.raises(AssertionError):

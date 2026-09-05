@@ -14,7 +14,10 @@ def rule_ids(old: str, new: str) -> list[str]:
 @pytest.mark.parametrize(
     "old,new",
     [
-        ("    assert (\n        total == 3\n    )\n", "    assert (\n        total\n    )\n"),
+        (
+            "    assert (\n        total == 3\n    )\n",
+            "    assert (\n        total\n    )\n",
+        ),
         (
             "    self.assertTrue(\n        total == 3\n    )\n",
             "    self.assertTrue(\n        total\n    )\n",
@@ -25,10 +28,12 @@ def rule_ids(old: str, new: str) -> list[str]:
         ),
     ],
 )
-def test_weakening_inside_unchanged_assertion_start_is_reported(old: str, new: str) -> None:
-    assert rule_ids("def test_total(self):\n" + old, "def test_total(self):\n" + new) == [
-        "TS003"
-    ]
+def test_weakening_inside_unchanged_assertion_start_is_reported(
+    old: str, new: str
+) -> None:
+    assert rule_ids(
+        "def test_total(self):\n" + old, "def test_total(self):\n" + new
+    ) == ["TS003"]
 
 
 def test_multiline_skip_condition_change_is_reported() -> None:

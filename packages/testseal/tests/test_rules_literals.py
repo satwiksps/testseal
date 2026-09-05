@@ -13,9 +13,11 @@ def audit(old: str, new: str):
 
 @pytest.mark.parametrize(
     "before,after",
-    [(2**53, 2**53 + 1), (10**399, 10**400), (-10**400, -10**399)],
+    [(2**53, 2**53 + 1), (10**399, 10**400), (-(10**400), -(10**399))],
 )
-def test_integer_tolerances_keep_exact_values_without_overflow(before: int, after: int) -> None:
+def test_integer_tolerances_keep_exact_values_without_overflow(
+    before: int, after: int
+) -> None:
     result = audit(
         f"def test_value():\n    assert value == pytest.approx(1, abs={before})\n",
         f"def test_value():\n    assert value == pytest.approx(1, abs={after})\n",
@@ -33,8 +35,12 @@ def test_large_integer_tolerance_tightening_is_not_reported() -> None:
     assert result.findings == []
 
 
-@pytest.mark.parametrize("expression", ["self.assertFalse(False)", "self.assertFalse(0)"])
-def test_falsy_literal_assertions_do_not_validate_broad_handlers(expression: str) -> None:
+@pytest.mark.parametrize(
+    "expression", ["self.assertFalse(False)", "self.assertFalse(0)"]
+)
+def test_falsy_literal_assertions_do_not_validate_broad_handlers(
+    expression: str,
+) -> None:
     result = audit(
         "def test_value(self):\n    call()\n",
         f"def test_value(self):\n    try:\n        call()\n    except Exception:\n        {expression}\n",
@@ -65,7 +71,9 @@ def test_tautology_before_unconditional_reraise_does_not_hide_validation() -> No
 def test_deep_expression_becomes_a_parse_warning_instead_of_crashing(side: str) -> None:
     deep_source = "def test_value():\n    assert " + " + ".join(["value"] * 2000) + "\n"
     simple_source = "def test_value():\n    assert value\n"
-    old, new = (deep_source, simple_source) if side == "old" else (simple_source, deep_source)
+    old, new = (
+        (deep_source, simple_source) if side == "old" else (simple_source, deep_source)
+    )
     result = Auditor().audit([changes_from_sources("tests/test_value.py", old, new)])
     assert len(result.parse_warnings) == 1
     assert f"{side} source could not be parsed" in result.parse_warnings[0]
