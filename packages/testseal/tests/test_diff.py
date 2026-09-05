@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 
 import pytest
+import testseal.diff as diff_module
 from testseal import audit_diff
 from testseal.diff import (
     DiffError,
@@ -265,3 +267,19 @@ def test_real_git_staged_rename_with_spaces_hydrates_both_sources(
     [change] = GitRepository(tmp_path).staged_changes()
     assert (change.old_path, change.new_path) == (old.name, new.name)
     assert change.old_source == change.new_source == source
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows executable lookup")
+def test_windows_git_lookup_works_without_pathext_expansion(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_which = diff_module.shutil.which
+
+    def which_without_pathext(command: str) -> str | None:
+        # Python 3.11 does not expand PATHEXT for path-containing commands.
+        if not command.lower().endswith(".exe"):
+            return None
+        return original_which(command)
+
+    monkeypatch.setattr(diff_module.shutil, "which", which_without_pathext)
+    assert Path(GitRepository._find_git()).is_file()

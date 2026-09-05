@@ -446,8 +446,9 @@ class GitRepository:
     def _find_git() -> str:
         # Resolve each PATH entry explicitly: Windows process creation and
         # shutil.which may otherwise prefer an executable in the scanned cwd.
+        executable = "git.exe" if os.name == "nt" else "git"
         for directory in os.get_exec_path():
-            candidate = shutil.which(str(Path(directory).absolute() / "git"))
+            candidate = shutil.which(str(Path(directory).absolute() / executable))
             if candidate:
                 return candidate
         raise DiffError("cannot execute Git: git executable not found on PATH")
