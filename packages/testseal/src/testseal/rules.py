@@ -120,6 +120,14 @@ def _format_number(value: int | float) -> str:
     return str(value) if isinstance(value, int) else f"{value:g}"
 
 
+def _tolerance_weakened(
+    before: int | float, after: int | float, parameter: str, *, negated: bool
+) -> bool:
+    if parameter == "places":
+        return after > before if negated else after < before
+    return after < before if negated else after > before
+
+
 def _is_obviously_true(node: ast.AST) -> bool:
     """Return true only for small, syntactically evident tautologies.
 
@@ -1459,10 +1467,9 @@ class RuleEngine:
                     key=lambda item: abs(item.line - mapped_line),
                 )
                 available_after.remove(after)
-                widened = (
-                    after.value < before.value
-                    if after.parameter == "places"
-                    else after.value > before.value
+                negated = after.call.rsplit(".", 1)[-1] == "assertNotAlmostEqual"
+                widened = _tolerance_weakened(
+                    before.value, after.value, after.parameter, negated=negated
                 )
                 if not widened:
                     continue
@@ -1472,7 +1479,8 @@ class RuleEngine:
                     line=after.line,
                     column=after.column,
                     message=(
-                        f"{after.parameter} tolerance widened from "
+                        f"{after.parameter} "
+                        f"{'inequality tolerance relaxed' if negated else 'tolerance widened'} from "
                         f"{_format_number(before.value)} to "
                         f"{_format_number(after.value)} in {after.scope}"
                     ),
@@ -1612,10 +1620,12 @@ class RuleEngine:
             for (before_line, before_value), (after_line, after_value) in zip(
                 old_tolerances[parameter], new_tolerances[parameter], strict=False
             ):
-                widened = (
-                    after_value < before_value
-                    if parameter == "places"
-                    else after_value > before_value
+                negated = all(
+                    re.search(r"\bassertNotAlmostEqual\s*\(", line.content)
+                    for line in (before_line, after_line)
+                )
+                widened = _tolerance_weakened(
+                    before_value, after_value, parameter, negated=negated
                 )
                 if not widened:
                     continue
@@ -1627,7 +1637,8 @@ class RuleEngine:
                     change,
                     line=after_line.new_line or 1,
                     message=(
-                        f"{parameter} tolerance widened from "
+                        f"{parameter} "
+                        f"{'inequality tolerance relaxed' if negated else 'tolerance widened'} from "
                         f"{before_value:g} to {after_value:g}"
                     ),
                     evidence=evidence,

@@ -136,6 +136,10 @@ scope and favors semantic subject identity and diff proximity.
 `rel_tol`, `abs_tol`, `rtol`, `atol`, or `delta` increases, or unittest `places`
 decreases.
 
+For `assertNotAlmostEqual`, the direction is reversed: decreasing `delta` or
+increasing `places` makes the inequality assertion easier to pass and is
+reported. Increasing `delta` or decreasing `places` strengthens that assertion.
+
 **Supported:** numeric literals, including signed and scientific notation, in
 keyword arguments; `places` is also recognized as the third positional argument
 of `assertAlmostEqual` and `assertNotAlmostEqual`. Calls are paired using their
