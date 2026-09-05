@@ -340,6 +340,26 @@ def load_config(path: str | Path | None = None, *, cwd: str | Path = ".") -> Con
     except (OSError, tomllib.TOMLDecodeError) as exc:
         raise ConfigError(f"cannot read {config_path}: {exc}") from exc
 
+    # A dedicated policy file must not silently discard misspelled tables or
+    # sibling keys. Other project TOML files may legitimately contain more tools.
+    dedicated = config_path.name == "testseal.toml"
+    if dedicated:
+        wrapper = (
+            "tool"
+            if "tool" in document
+            else "testseal"
+            if "testseal" in document
+            else None
+        )
+        if wrapper is not None:
+            unknown = [key for key in document if key != wrapper]
+            if unknown:
+                raise ConfigError(f"unknown configuration key: {unknown[0]!r}")
+            if wrapper == "tool" and isinstance(document["tool"], Mapping):
+                unknown = [key for key in document["tool"] if key != "testseal"]
+                if unknown:
+                    raise ConfigError(f"unknown configuration key: 'tool.{unknown[0]}'")
+
     tool = document.get("tool")
     nested = tool.get("testseal") if isinstance(tool, Mapping) else None
     if nested is not None:
@@ -351,6 +371,6 @@ def load_config(path: str | Path | None = None, *, cwd: str | Path = ".") -> Con
         if not isinstance(standalone, Mapping):
             raise ConfigError("[testseal] must be a table")
         return config_from_mapping(standalone)
-    if explicit:
+    if explicit or dedicated:
         return config_from_mapping(document)
     return Config()

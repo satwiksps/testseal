@@ -189,3 +189,29 @@ def test_invalid_config_is_rejected(mapping: object, message: str) -> None:
 def test_missing_explicit_config_is_an_error(tmp_path: Path) -> None:
     with pytest.raises(ConfigError, match="not found"):
         load_config(tmp_path / "missing.toml")
+
+
+@pytest.mark.parametrize(
+    "document", ['fail_on = "high"\n', '[testseal]\nfail_on = "high"\n']
+)
+def test_discovered_standalone_policy_is_enforced(
+    tmp_path: Path, document: str
+) -> None:
+    (tmp_path / "testseal.toml").write_text(document, encoding="utf-8")
+    assert load_config(cwd=tmp_path).fail_on is Severity.HIGH
+
+
+@pytest.mark.parametrize(
+    "document",
+    [
+        'fail_onn = "high"\n',
+        '[testseel]\nfail_on = "high"\n',
+        '[testseal]\nfail_on = "high"\n[rules.TS001]\nenabled = false\n',
+    ],
+)
+def test_discovered_standalone_policy_rejects_misplaced_keys(
+    tmp_path: Path, document: str
+) -> None:
+    (tmp_path / "testseal.toml").write_text(document, encoding="utf-8")
+    with pytest.raises(ConfigError, match="unknown configuration key"):
+        load_config(cwd=tmp_path)
