@@ -255,6 +255,14 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
         path = current.path if current is not None else "<unknown>"
         return f"incomplete file diff for {path!r}: no change content"
 
+    def validate_file() -> None:
+        if current is None:
+            return
+        if not current_has_content:
+            raise DiffError(incomplete_file_message())
+        if current.old_path is None and current.new_path is None:
+            raise DiffError("cannot determine file paths from diff headers")
+
     for raw in text.removesuffix("\n").split("\n"):
         raw = raw.removesuffix("\r")
         if in_hunk and current is not None:
@@ -296,15 +304,25 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
                 in_hunk = False
             continue
 
-        header = _git_header_paths(raw)
-        if header is not None:
-            if current is not None and not current_has_content:
-                raise DiffError(incomplete_file_message())
-            current = ChangedFile(*header)
+        if raw.startswith("diff --git "):
+            validate_file()
+            # Git leaves spaces unquoted. Those headers can be ambiguous;
+            # extended rename/copy or ---/+++ headers supply the exact paths.
+            current = ChangedFile(*(_git_header_paths(raw) or (None, None)))
             files.append(current)
             saw_old_header = False
             saw_new_header = False
             current_has_content = False
+            continue
+
+        if current is not None and raw.startswith(("rename from ", "copy from ")):
+            current.old_path = _decode_git_path(raw.split(" ", 2)[2])
+            current_has_content = True
+            continue
+
+        if current is not None and raw.startswith(("rename to ", "copy to ")):
+            current.new_path = _decode_git_path(raw.split(" ", 2)[2])
+            current_has_content = True
             continue
 
         if current is not None and raw.startswith("new file mode "):
@@ -321,10 +339,6 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
             (
                 "old mode ",
                 "new mode ",
-                "rename from ",
-                "rename to ",
-                "copy from ",
-                "copy to ",
                 "Binary files ",
                 "GIT binary patch",
                 "Submodule ",
@@ -336,8 +350,7 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
         if raw.startswith("--- "):
             path = _clean_header_path(raw[4:])
             if current is None or saw_old_header:
-                if current is not None and not current_has_content:
-                    raise DiffError(incomplete_file_message())
+                validate_file()
                 current = ChangedFile(path, None)
                 files.append(current)
                 saw_new_header = False
@@ -347,6 +360,8 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
             saw_old_header = True
             continue
         if raw.startswith("+++ "):
+            if saw_new_header:
+                raise DiffError("unexpected new file header without an old file header")
             path = _clean_header_path(raw[4:])
             if current is None:
                 current = ChangedFile(None, path)
@@ -371,10 +386,19 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
             in_hunk = old_remaining > 0 or new_remaining > 0
             continue
 
+        if raw.startswith("@@"):
+            raise DiffError(f"malformed hunk header: {raw!r}")
+        if current is not None and raw.startswith(("+", "-")):
+            # git format-patch appends this signature separator after its diff.
+            if raw == "-- " and current_has_content:
+                continue
+            raise DiffError(
+                f"unexpected change line outside a hunk for {current.path!r}"
+            )
+
     if in_hunk:
         raise DiffError(incomplete_hunk_message())
-    if current is not None and not current_has_content:
-        raise DiffError(incomplete_file_message())
+    validate_file()
     changes = [item for item in files if item.old_path or item.new_path]
     if text.strip() and not changes:
         raise DiffError("input does not contain a unified diff")
