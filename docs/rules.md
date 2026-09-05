@@ -119,7 +119,7 @@ unittest equality, identity, type, ordering, and membership methods. Equivalent
 predicate forms are canonicalized: for example,
 `assertEqual(actual, expected)` to `assertTrue(actual == expected)` is not a
 finding. Replacements such as equality to truthiness, type checking to
-truthiness, or `assertEqual(value, value)` are findings.
+truthiness, `assertEqual(value, value)`, or `assertFalse(False)` are findings.
 
 **Intentional non-findings:** strengthening an assertion, changing an expected
 value, or changing between equally precise predicates is not classified as
@@ -160,7 +160,9 @@ re-raise. Tuples containing a recognized broad type are included.
 **Supported:** a top-level `raise`, non-tautological Python `assert`, known
 unittest/mock assertion call, `pytest.fail`, or `self.fail` makes a straight-line
 handler safe. A conditional assertion or raise does not hide a swallowing path;
-neither do `assert True`, `assertTrue(True)`, or an obvious self-equality.
+neither do `assert True`, `assertTrue(True)`, `assertFalse(False)`, or an obvious
+self-equality. A tautology before a direct validation or re-raise does not
+prevent recognition of that later validation.
 
 **Intentional non-findings:** narrow exception handlers and broad handlers with
 a statically visible, unconditional validation or re-raise are not reported.
