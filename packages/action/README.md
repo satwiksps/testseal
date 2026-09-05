@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: '3.12'
       - id: testseal
-        uses: satwiksps/testseal@e6bba7e933c37afc34e2836ac2b1baee7542bfe5 # v1.0.0
+        uses: satwiksps/testseal@d12f42c93b565c3a0b27acf8eabafce881c09b35 # v1.0.1
         with:
           fail-on: high
 ```
