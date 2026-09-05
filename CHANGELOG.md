@@ -6,6 +6,37 @@ is omitted unless it changes installation or runtime behavior.
 
 ## [Unreleased]
 
+### Fixed
+
+- Detect weakening inside multiline assertions, skip conditions, exception
+  handlers, tolerances, and mock calls when their opening line is unchanged.
+- Preserve large integer tolerances, apply inverse `assertNotAlmostEqual`
+  comparisons correctly, and reject vacuous exception-handler validation.
+- Report AST recursion limits as incomplete analysis, fail on misplaced
+  standalone policy keys, and filter excluded files before source decoding.
+- Encode special filenames in SARIF and return operational errors for broken
+  input/output streams.
+- Reject malformed trailing diff hunks and surplus change lines; preserve Git
+  renames with spaces in their filenames.
+- Include the release-check helper required by source-distribution tests.
+- Allow empty optional website URL settings to fall back to a configured host,
+  and verify production reports against the configured canonical origin.
+
+### Security
+
+- Isolate Action Python imports and installer subprocesses from checkout-local
+  modules and Python environment overrides. Preinstalled packages must be in the
+  selected interpreter or virtual environment; user-site and `PYTHONPATH`
+  installations are no longer used by the Action.
+- Resolve Git and Action interpreter executables through `PATH` rather than
+  implicit Windows current-directory lookup. Disable Git text-conversion drivers
+  and override display settings and binary attributes for analyzer input.
+
+### Compatibility
+
+- Tolerance findings preserve exact integer values; fingerprints involving large
+  integer tolerances may change. Review updated findings before suppressing them.
+
 ## [1.0.0] - 2026-08-22
 
 ### Added

@@ -8,7 +8,8 @@ Git-backed scans resolve Git from `PATH`, disable external diff and text-convers
 drivers, and request plain text patches with fixed prefixes and line markers.
 Color preferences and binary diff attributes cannot hide changed Python lines.
 Keep `PATH` limited to trusted tool directories, especially when scanning a checkout
-from another contributor.
+from another contributor. The Git installation and its local/global configuration
+are part of the trusted execution environment.
 
 TestSeal is designed to inspect untrusted pull-request content without executing
 that content.
