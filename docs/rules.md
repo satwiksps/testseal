@@ -8,6 +8,11 @@ TestSeal rules report evidence about a diff. They do not infer whether a change
 was malicious, AI-generated, or incorrect. Released rule IDs are integration
 keys and retain their documented meaning.
 
+Git-backed analysis compares complete syntax, including edits inside multiline
+assertions, decorators, calls, and exception handlers. Their opening lines do
+not have to change for a finding to be reported. Patch-only scans have less
+context and may miss these edits.
+
 ## Severity, confidence, and policy
 
 Severity describes the potential review impact of a matched transformation;

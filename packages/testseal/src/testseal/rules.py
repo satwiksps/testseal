@@ -281,6 +281,13 @@ class Inventory:
     mocks: list[SyntaxRecord]
 
 
+def _has_added_lines(change: ChangedFile, record: SyntaxRecord) -> bool:
+    return any(
+        line.new_line is not None and record.line <= line.new_line <= record.end_line
+        for line in change.added_lines
+    )
+
+
 _ASSERT_METHOD_RANKS: dict[str, int] = {
     "assertTrue": 2,
     "assertFalse": 2,
@@ -1170,14 +1177,12 @@ class RuleEngine:
         # consume the old count and make the genuinely new record disappear.
         ordered = sorted(
             new,
-            key=lambda record: (change.is_new_line_changed(record.line), record.line),
+            key=lambda record: (_has_added_lines(change, record), record.line),
         )
         for record in ordered:
             record_key = key(record)
             if old_counts[record_key]:
                 old_counts[record_key] -= 1
-                continue
-            if not change.is_new_line_changed(record.line) and change.lines:
                 continue
             finding = self._finding(
                 rule_id,
@@ -1206,8 +1211,10 @@ class RuleEngine:
 
         # Match syntax that survived the diff before considering added lines.
         # This is essential when an identical marker is prepended to a test.
+        pending: list[SyntaxRecord] = []
         for record in sorted(new.skips, key=lambda item: item.line):
-            if change.lines and change.is_new_line_changed(record.line):
+            if _has_added_lines(change, record):
+                pending.append(record)
                 continue
             match = next(
                 (item for item in remaining_old if compatible(item, record)),
@@ -1215,11 +1222,13 @@ class RuleEngine:
             )
             if match is not None:
                 remaining_old.remove(match)
+            else:
+                # A deletion inside a multiline call can change its semantics
+                # without adding any lines (for example, removing a condition).
+                pending.append(record)
 
         findings: list[Finding] = []
-        for record in sorted(new.skips, key=lambda item: item.line):
-            if change.lines and not change.is_new_line_changed(record.line):
-                continue
+        for record in pending:
             candidates = [item for item in remaining_old if compatible(item, record)]
             match = min(
                 candidates,
@@ -1356,8 +1365,6 @@ class RuleEngine:
                 change, old_records, new_records
             )
             for before, after in pairs:
-                if change.lines and not change.is_new_line_changed(after.line):
-                    continue
                 if not self._assertion_weakened(before, after):
                     continue
                 detail = (
@@ -1378,8 +1385,6 @@ class RuleEngine:
                     findings.append(finding)
 
             for removed in removed_records:
-                if not change.is_old_line_changed(removed.line) and change.lines:
-                    continue
                 finding = self._finding(
                     "TS001",
                     change,
@@ -1452,7 +1457,7 @@ class RuleEngine:
                     if after.parameter == "places"
                     else after.value > before.value
                 )
-                if not widened or not change.is_new_line_changed(after.line):
+                if not widened:
                     continue
                 finding = self._finding(
                     "TS004",
