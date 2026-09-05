@@ -165,3 +165,15 @@ def test_parse_rejects_a_truncated_hunk_instead_of_returning_partial_data() -> N
 """
     with pytest.raises(DiffError, match="incomplete hunk.*1 more new line"):
         parse_unified_diff(patch)
+
+
+def test_patch_control_characters_do_not_create_phantom_lines() -> None:
+    patch = (
+        "--- a/data.bin\n+++ b/data.bin\n@@ -1 +1 @@\n"
+        "-old\x00\v\f\x85\u2028value\n+new\x00\v\f\x85\u2028value\n"
+    )
+    [change] = parse_unified_diff(patch)
+    assert [(line.kind, line.content) for line in change.lines] == [
+        ("-", "old\x00\v\f\x85\u2028value"),
+        ("+", "new\x00\v\f\x85\u2028value"),
+    ]

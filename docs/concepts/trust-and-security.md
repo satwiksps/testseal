@@ -4,6 +4,12 @@ description: Threat model, permissions, untrusted input handling, and secure dep
 
 # Trust and security
 
+Git-backed scans resolve Git from `PATH`, disable external diff and text-conversion
+drivers, and request plain text patches with fixed prefixes and line markers.
+Color preferences and binary diff attributes cannot hide changed Python lines.
+Keep `PATH` limited to trusted tool directories, especially when scanning a checkout
+from another contributor.
+
 TestSeal is designed to inspect untrusted pull-request content without executing
 that content.
 

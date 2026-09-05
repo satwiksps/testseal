@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import difflib
 import io
+import os
 import re
+import shutil
 import subprocess
 import tokenize
 from collections.abc import Iterable, Sequence
@@ -101,6 +103,21 @@ class ChangedFile:
 
 
 _HUNK = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(?: .*)?$")
+
+# Git's human-facing defaults and repository diff drivers are not analyzer input.
+_DIFF_OPTIONS = (
+    "--no-ext-diff",
+    "--no-textconv",
+    "--no-color",
+    "--text",
+    "--no-relative",
+    "--src-prefix=a/",
+    "--dst-prefix=b/",
+    "--output-indicator-new=+",
+    "--output-indicator-old=-",
+    "--output-indicator-context= ",
+    "--unified=3",
+)
 
 _C_ESCAPES = {
     "a": 0x07,
@@ -238,7 +255,8 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
         path = current.path if current is not None else "<unknown>"
         return f"incomplete file diff for {path!r}: no change content"
 
-    for raw in text.splitlines():
+    for raw in text.removesuffix("\n").split("\n"):
+        raw = raw.removesuffix("\r")
         if in_hunk and current is not None:
             if raw.startswith("\\ No newline at end of file"):
                 continue
@@ -393,16 +411,27 @@ class GitRepository:
     """Read diffs and corresponding blobs from one Git work tree."""
 
     def __init__(self, root: str | Path = ".") -> None:
+        self._git = self._find_git()
         self.root = Path(root).resolve()
         discovered = self._run("rev-parse", "--show-toplevel").strip()
         if not discovered:
             raise DiffError(f"not a Git repository: {self.root}")
         self.root = Path(discovered)
 
+    @staticmethod
+    def _find_git() -> str:
+        # Resolve each PATH entry explicitly: Windows process creation and
+        # shutil.which may otherwise prefer an executable in the scanned cwd.
+        for directory in os.get_exec_path():
+            candidate = shutil.which(str(Path(directory).absolute() / "git"))
+            if candidate:
+                return candidate
+        raise DiffError("cannot execute Git: git executable not found on PATH")
+
     def _run(self, *args: str) -> str:
         try:
             process = subprocess.run(
-                ["git", "-C", str(self.root), *args],
+                [self._git, "-C", str(self.root), *args],
                 capture_output=True,
                 check=False,
             )
@@ -435,7 +464,7 @@ class GitRepository:
         try:
             process = subprocess.run(
                 [
-                    "git",
+                    self._git,
                     "-C",
                     str(self.root),
                     "show",
@@ -474,9 +503,7 @@ class GitRepository:
         self, *, head: str = "HEAD", paths: Sequence[str] = ()
     ) -> list[ChangedFile]:
         head = self._revision(head, label="head")
-        patch = self._run(
-            "diff", "--no-ext-diff", "--unified=3", head, *self._path_args(paths)
-        )
+        patch = self._run("diff", *_DIFF_OPTIONS, head, *self._path_args(paths))
         files = parse_unified_diff(patch)
         for item in files:
             item.old_source = self._blob(head, item.old_path)
@@ -511,9 +538,7 @@ class GitRepository:
         return files
 
     def staged_changes(self, *, paths: Sequence[str] = ()) -> list[ChangedFile]:
-        patch = self._run(
-            "diff", "--cached", "--no-ext-diff", "--unified=3", *self._path_args(paths)
-        )
+        patch = self._run("diff", "--cached", *_DIFF_OPTIONS, *self._path_args(paths))
         files = parse_unified_diff(patch)
         for item in files:
             item.old_source = self._blob("HEAD", item.old_path)
@@ -530,8 +555,7 @@ class GitRepository:
             raise DiffError(f"no merge base between {base!r} and {head!r}")
         patch = self._run(
             "diff",
-            "--no-ext-diff",
-            "--unified=3",
+            *_DIFF_OPTIONS,
             merge_base,
             head,
             *self._path_args(paths),
