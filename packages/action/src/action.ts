@@ -70,6 +70,7 @@ export function withEventRefs(
 
 function testSealArgs(inputs: ActionInputs): string[] {
   return [
+    '-I',
     '-m',
     'testseal',
     'scan',
@@ -94,7 +95,7 @@ export function installArgs(
       'The bundled TestSeal Python package is missing. Pin a complete TestSeal release or set install: false after installing TestSeal yourself.',
     );
   }
-  return ['-m', 'pip', 'install', '--disable-pip-version-check', '--no-input', localPackage];
+  return ['-I', '-m', 'pip', 'install', '--disable-pip-version-check', '--no-input', localPackage];
 }
 
 function lastUsefulOutput(result: CommandResult): string {

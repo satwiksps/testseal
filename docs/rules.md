@@ -8,6 +8,15 @@ TestSeal rules report evidence about a diff. They do not infer whether a change
 was malicious, AI-generated, or incorrect. Released rule IDs are integration
 keys and retain their documented meaning.
 
+Git-backed analysis compares complete syntax, including edits inside multiline
+assertions, decorators, calls, and exception handlers. Their opening lines do
+not have to change for a finding to be reported. Patch-only scans have less
+context and may miss these edits.
+
+Source that exceeds the interpreter's parsing or recursion limits produces a
+parse warning. A blocking scan returns exit code `2` for that incomplete
+analysis.
+
 ## Severity, confidence, and policy
 
 Severity describes the potential review impact of a matched transformation;
@@ -114,7 +123,7 @@ unittest equality, identity, type, ordering, and membership methods. Equivalent
 predicate forms are canonicalized: for example,
 `assertEqual(actual, expected)` to `assertTrue(actual == expected)` is not a
 finding. Replacements such as equality to truthiness, type checking to
-truthiness, or `assertEqual(value, value)` are findings.
+truthiness, `assertEqual(value, value)`, or `assertFalse(False)` are findings.
 
 **Intentional non-findings:** strengthening an assertion, changing an expected
 value, or changing between equally precise predicates is not classified as
@@ -130,6 +139,10 @@ scope and favors semantic subject identity and diff proximity.
 **Signal:** a literal numeric tolerance becomes less strict: `rel`, `abs`,
 `rel_tol`, `abs_tol`, `rtol`, `atol`, or `delta` increases, or unittest `places`
 decreases.
+
+For `assertNotAlmostEqual`, the direction is reversed: decreasing `delta` or
+increasing `places` makes the inequality assertion easier to pass and is
+reported. Increasing `delta` or decreasing `places` strengthens that assertion.
 
 **Supported:** numeric literals, including signed and scientific notation, in
 keyword arguments; `places` is also recognized as the third positional argument
@@ -155,7 +168,9 @@ re-raise. Tuples containing a recognized broad type are included.
 **Supported:** a top-level `raise`, non-tautological Python `assert`, known
 unittest/mock assertion call, `pytest.fail`, or `self.fail` makes a straight-line
 handler safe. A conditional assertion or raise does not hide a swallowing path;
-neither do `assert True`, `assertTrue(True)`, or an obvious self-equality.
+neither do `assert True`, `assertTrue(True)`, `assertFalse(False)`, or an obvious
+self-equality. A tautology before a direct validation or re-raise does not
+prevent recognition of that later validation.
 
 **Intentional non-findings:** narrow exception handlers and broad handlers with
 a statically visible, unconditional validation or re-raise are not reported.

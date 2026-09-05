@@ -34,6 +34,8 @@ jobs:
           - os: ubuntu-latest
             python: "3.14"
           - os: windows-latest
+            python: "3.11"
+          - os: windows-latest
             python: "3.12"
           - os: macos-latest
             python: "3.12"
@@ -71,6 +73,8 @@ jobs:
           name: python
           disable_search: true
           fail_ci_if_error: true
+          # Codecov's tokenless PR namespace also covers same-repo Dependabot branches.
+          override_branch: ${{ github.event_name == 'pull_request' && format('pr{0}:{1}', github.event.number, github.head_ref) || '' }}
           use_oidc: ${{ github.event_name != 'pull_request' }}
       - name: Exercise CLI
         run: python scripts/verify_example.py
@@ -89,11 +93,34 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
       - name: Install build tooling
-        run: python -m pip install build pre-commit twine
+        run: python -m pip install build pre-commit pytest twine
       - name: Build wheel and source distribution
         run: python -m build
       - name: Validate distribution metadata
         run: python -m twine check dist/*
+      - name: Run tests from the source distribution
+        run: |
+          python - <<'PY'
+          import subprocess
+          import sys
+          import tarfile
+          import tempfile
+          from pathlib import Path
+
+          with tempfile.TemporaryDirectory() as directory:
+              root = Path(directory)
+              with tarfile.open(next(Path("dist").glob("*.tar.gz"))) as archive:
+                  archive.extractall(root, filter="data")
+              source = next(root.iterdir())
+              subprocess.run(
+                  [
+                      sys.executable, "-m", "pytest", "-q",
+                      "--basetemp", str(root / "pytest-tmp"),
+                  ],
+                  cwd=source,
+                  check=True,
+              )
+          PY
       - name: Install the built wheel
         run: python -m pip install --force-reinstall dist/*.whl
       - name: Smoke-test the built wheel
@@ -156,6 +183,7 @@ jobs:
           network_prefix: packages/action/
           disable_search: true
           fail_ci_if_error: true
+          override_branch: ${{ github.event_name == 'pull_request' && format('pr{0}:{1}', github.event.number, github.head_ref) || '' }}
           use_oidc: ${{ github.event_name != 'pull_request' }}
       - name: Ensure the executable bundle is committed
         run: >-
@@ -166,9 +194,17 @@ jobs:
         run: git diff --exit-code -- dist
 
   action-integration:
-    name: Action integration
+    name: ${{ matrix.name }}
     needs: [python, action]
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: Action integration
+          - os: windows-latest
+            name: Action integration on Windows
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -180,6 +216,11 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: pyproject.toml
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - name: Verify bundled installation and untrusted checkout isolation
+        run: python scripts/verify_action.py
       - name: Exercise the public Action entry point
         uses: ./
         with:

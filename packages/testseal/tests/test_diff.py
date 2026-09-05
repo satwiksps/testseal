@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+import os
+import subprocess
+from pathlib import Path
+
 import pytest
+import testseal.diff as diff_module
 from testseal import audit_diff
 from testseal.diff import (
     DiffError,
+    GitRepository,
     changes_from_sources,
     make_unified_diff,
     parse_unified_diff,
@@ -165,3 +171,117 @@ def test_parse_rejects_a_truncated_hunk_instead_of_returning_partial_data() -> N
 """
     with pytest.raises(DiffError, match="incomplete hunk.*1 more new line"):
         parse_unified_diff(patch)
+
+
+def test_patch_control_characters_do_not_create_phantom_lines() -> None:
+    patch = (
+        "--- a/data.bin\n+++ b/data.bin\n@@ -1 +1 @@\n"
+        "-old\x00\v\f\x85\u2028value\n+new\x00\v\f\x85\u2028value\n"
+    )
+    [change] = parse_unified_diff(patch)
+    assert [(line.kind, line.content) for line in change.lines] == [
+        ("-", "old\x00\v\f\x85\u2028value"),
+        ("+", "new\x00\v\f\x85\u2028value"),
+    ]
+
+
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        "@@ -bad +2 @@\n-assert other == 2\n+assert other\n",
+        "@@ -2 +2 @\n-assert other == 2\n+assert other\n",
+        "-assert extra == 3\n",
+        "+assert extra\n",
+        "+++ b/another_file.py\n",
+    ],
+)
+def test_parser_rejects_malformed_content_after_a_complete_hunk(suffix: str) -> None:
+    patch = "--- a/test_x.py\n+++ b/test_x.py\n@@ -1 +1 @@\n-old\n+new\n"
+    with pytest.raises(DiffError):
+        parse_unified_diff(patch + suffix)
+
+
+def test_parser_accepts_git_format_patch_signature() -> None:
+    patch = "--- a/test_x.py\n+++ b/test_x.py\n@@ -1 +1 @@\n-old\n+new\n-- \n2.49.0\n"
+    [change] = parse_unified_diff(patch)
+    assert [line.content for line in change.added_lines] == ["new"]
+
+
+@pytest.mark.parametrize("kind", ["rename", "copy"])
+def test_parser_uses_exact_extended_paths_for_space_named_files(kind: str) -> None:
+    patch = (
+        "diff --git a/a/old name.py b/b/new name.py\n"
+        "similarity index 100%\n"
+        f"{kind} from a/old name.py\n"
+        f"{kind} to b/new name.py\n"
+    )
+    [change] = parse_unified_diff(patch)
+    assert change.old_path == "a/old name.py"
+    assert change.new_path == "b/new name.py"
+    assert change.lines == []
+
+
+def test_parser_keeps_space_named_rename_separate_from_previous_file() -> None:
+    patch = (
+        "diff --git a/test_x.py b/test_x.py\n"
+        "--- a/test_x.py\n+++ b/test_x.py\n@@ -1 +1 @@\n-old\n+new\n"
+        "diff --git a/old name.py b/new name.py\n"
+        "similarity index 100%\nrename from old name.py\nrename to new name.py\n"
+    )
+    changes = parse_unified_diff(patch)
+    assert [(change.old_path, change.new_path) for change in changes] == [
+        ("test_x.py", "test_x.py"),
+        ("old name.py", "new name.py"),
+    ]
+
+
+def test_real_git_staged_rename_with_spaces_hydrates_both_sources(
+    tmp_path: Path,
+) -> None:
+    def git(*arguments: str) -> None:
+        subprocess.run(
+            ["git", "-C", str(tmp_path), *arguments],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+    git("init")
+    old = tmp_path / "test_old name.py"
+    new = tmp_path / "test_new name.py"
+    source = "def test_value():\n    assert value == 1\n"
+    old.write_text(source, encoding="utf-8")
+    git("add", "--", old.name)
+    git(
+        "-c",
+        "user.name=TestSeal test",
+        "-c",
+        "user.email=testseal@example.invalid",
+        "commit",
+        "--no-gpg-sign",
+        "--no-verify",
+        "-m",
+        "initial test",
+    )
+    old.rename(new)
+    git("add", "-A")
+
+    [change] = GitRepository(tmp_path).staged_changes()
+    assert (change.old_path, change.new_path) == (old.name, new.name)
+    assert change.old_source == change.new_source == source
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows executable lookup")
+def test_windows_git_lookup_works_without_pathext_expansion(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_which = diff_module.shutil.which
+
+    def which_without_pathext(command: str) -> str | None:
+        # Python 3.11 does not expand PATHEXT for path-containing commands.
+        if not command.lower().endswith(".exe"):
+            return None
+        return original_which(command)
+
+    monkeypatch.setattr(diff_module.shutil, "which", which_without_pathext)
+    assert Path(GitRepository._find_git()).is_file()

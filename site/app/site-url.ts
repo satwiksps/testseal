@@ -24,10 +24,11 @@ function normalizeSiteUrl(value: string): string {
 }
 
 export function getSiteUrl(): string {
-  const configuredUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    process.env.VERCEL_PROJECT_PRODUCTION_URL ??
-    process.env.VERCEL_URL;
+  const configuredUrl = [
+    process.env.NEXT_PUBLIC_SITE_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    process.env.VERCEL_URL,
+  ].find((value) => value?.trim());
 
   if (configuredUrl) return normalizeSiteUrl(configuredUrl);
 

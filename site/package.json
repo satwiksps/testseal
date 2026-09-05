@@ -1,6 +1,6 @@
 {
   "name": "testseal-site",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "license": "Apache-2.0",
   "homepage": "https://github.com/satwiksps/testseal#readme",
@@ -26,17 +26,18 @@
     "verify": "npm run lint && npm run typecheck && npm test && npm run build && npm run test:runtime"
   },
   "dependencies": {
-    "next": "16.3.1",
+    "next": "16.3.3",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",
-    "@next/eslint-plugin-next": "16.3.1",
+    "@next/env": "16.3.3",
+    "@next/eslint-plugin-next": "16.3.3",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "22.20.1",
     "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.4",
+    "@types/react-dom": "19.2.5",
     "eslint": "9.39.5",
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-react": "7.37.5",
@@ -45,7 +46,7 @@
     "postcss": "8.5.26",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.67.0"
+    "typescript-eslint": "8.68.0"
   },
   "packageManager": "npm@11.13.0",
   "type": "module"

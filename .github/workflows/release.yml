@@ -152,6 +152,11 @@ jobs:
           base: HEAD^
           head: HEAD
           fail-on: never
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - name: Verify bundled installation and untrusted checkout isolation
+        run: python scripts/verify_action.py
 
   publish-pypi:
     name: Publish Python package to PyPI

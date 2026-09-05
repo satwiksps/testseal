@@ -34,6 +34,7 @@ The Action runs on Node.js 24 and invokes the bundled Python core. Run
 - `staged` cannot be combined with `base` or `head`.
 - `python-command` cannot contain line breaks or NUL bytes.
 - `python-command` is executed directly, not through a shell.
+- executable names are resolved from `PATH`, without an implicit checkout search.
 - `paths` is trimmed and blank entries are removed.
 - boolean inputs accept only `true` or `false`, case-insensitively.
 - an explicit `fail-on` value overrides repository configuration.
@@ -54,7 +55,7 @@ invalid event values fail the Action before scanning.
 With `install: true`, the Action runs the equivalent of:
 
 ```text
-python -m pip install --disable-pip-version-check --no-input <bundled-project-root>
+python -I -m pip install --disable-pip-version-check --no-input <bundled-project-root>
 ```
 
 The path is resolved from the Action archive, not from the consumer workspace.
@@ -62,7 +63,15 @@ If the bundled `pyproject.toml` is missing, the Action fails closed instead of
 installing an unrelated repository project or falling back to PyPI.
 
 With `install: false`, the selected Python environment must already provide a
-compatible `testseal` module.
+compatible `testseal` module in a virtual environment or system installation.
+
+Installation and scanning use Python's isolated mode (`-I`). This prevents
+checkout files such as `pip.py`, `testseal.py`, and `sitecustomize.py` from
+being imported as tools or startup code. `PYTHONPATH`, other `PYTHON*`
+environment variables, and user-site packages are ignored. Python environment
+overrides are removed before launch so pip's build subprocesses cannot inherit
+them. An installation
+made only with `pip install --user` is therefore not available to the Action.
 
 ## Outputs
 

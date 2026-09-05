@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from typing import Any
+from urllib.parse import quote
 
 from . import __version__
 from .models import AuditResult, Finding, Severity
@@ -105,7 +106,9 @@ def _sarif_result(finding: Finding) -> dict[str, Any]:
         "locations": [
             {
                 "physicalLocation": {
-                    "artifactLocation": {"uri": finding.path.replace("\\", "/")},
+                    "artifactLocation": {
+                        "uri": quote(finding.path.replace("\\", "/"), safe="/")
+                    },
                     "region": region,
                 }
             }

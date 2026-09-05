@@ -118,6 +118,10 @@ python -m twine check dist/*
 ```
 
 Install and smoke-test the wheel in a clean environment before a release.
+Also extract the source distribution and run `python -m pytest` from its root;
+it includes the Python tests and their release-check helper. The package CI job
+runs this check outside the checkout so missing distribution files cannot be
+supplied accidentally by the repository.
 
 ## Pre-commit
 

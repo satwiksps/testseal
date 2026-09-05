@@ -4,10 +4,15 @@ import { once } from "node:events";
 import { fileURLToPath } from "node:url";
 import net from "node:net";
 import test from "node:test";
+import nextEnvironment from "@next/env";
+import { getSiteUrl } from "../app/site-url.ts";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const next = fileURLToPath(new URL("../node_modules/next/dist/bin/next", import.meta.url));
-const canonical = "https://testseal-integrity.vercel.app";
+
+process.env.NODE_ENV = "production";
+nextEnvironment.loadEnvConfig(root);
+const canonical = getSiteUrl();
 
 async function unusedPort() {
   const server = net.createServer();
@@ -38,9 +43,6 @@ async function waitForServer(url, output) {
 test("production routes publish the configured canonical origin", { timeout: 30_000 }, async () => {
   const port = await unusedPort();
   const environment = { ...process.env, NODE_ENV: "production" };
-  for (const key of ["NEXT_PUBLIC_SITE_URL", "VERCEL_PROJECT_PRODUCTION_URL", "VERCEL_URL", "VERCEL"]) {
-    delete environment[key];
-  }
   const output = [];
   const child = spawn(process.execPath, [next, "start", "--hostname", "127.0.0.1", "--port", String(port)], {
     cwd: root,
@@ -54,16 +56,21 @@ test("production routes publish the configured canonical origin", { timeout: 30_
   try {
     const origin = `http://127.0.0.1:${port}`;
     await waitForServer(origin, output);
+    async function getText(path) {
+      const response = await fetch(`${origin}${path}`);
+      assert.equal(response.status, 200, `${path} must respond successfully`);
+      return response.text();
+    }
     const [page, robots, sitemap] = await Promise.all([
-      fetch(origin).then((response) => response.text()),
-      fetch(`${origin}/robots.txt`).then((response) => response.text()),
-      fetch(`${origin}/sitemap.xml`).then((response) => response.text()),
+      getText("/"),
+      getText("/robots.txt"),
+      getText("/sitemap.xml"),
     ]);
 
-    assert.match(page, new RegExp(`<link rel="canonical" href="${canonical}"`));
-    assert.match(page, new RegExp(`<meta property="og:url" content="${canonical}"`));
-    assert.match(robots, new RegExp(`Sitemap: ${canonical}/sitemap.xml`));
-    assert.match(sitemap, new RegExp(`<loc>${canonical}</loc>`));
+    assert.ok(page.includes(`<link rel="canonical" href="${canonical}"`), "page must use the configured canonical origin");
+    assert.ok(page.includes(`<meta property="og:url" content="${canonical}"`), "Open Graph must use the configured canonical origin");
+    assert.ok(robots.includes(`Sitemap: ${canonical}/sitemap.xml`), "robots.txt must use the configured canonical origin");
+    assert.ok(sitemap.includes(`<loc>${canonical}</loc>`), "sitemap must use the configured canonical origin");
   } finally {
     child.kill();
     if (child.exitCode === null) await once(child, "exit");

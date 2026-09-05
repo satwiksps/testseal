@@ -62,3 +62,41 @@ test("uses the documented canonical URL in non-Vercel production", () => {
     "https://testseal-integrity.vercel.app",
   );
 });
+
+test("empty optional settings do not hide Vercel's production origin", () => {
+  assert.equal(
+    withEnvironment({
+      NODE_ENV: "production",
+      VERCEL: "1",
+      NEXT_PUBLIC_SITE_URL: "",
+      VERCEL_PROJECT_PRODUCTION_URL: "testseal.example.com",
+      VERCEL_URL: "preview.example.com",
+    }, getSiteUrl),
+    "https://testseal.example.com",
+  );
+});
+
+test("blank production-origin settings fall back to the deployment origin", () => {
+  assert.equal(
+    withEnvironment({
+      NODE_ENV: "production",
+      VERCEL: "1",
+      NEXT_PUBLIC_SITE_URL: "  ",
+      VERCEL_PROJECT_PRODUCTION_URL: "",
+      VERCEL_URL: "preview.example.com",
+    }, getSiteUrl),
+    "https://preview.example.com",
+  );
+});
+
+test("Vercel production still rejects missing public origins", () => {
+  assert.throws(
+    () => withEnvironment({
+      NODE_ENV: "production",
+      VERCEL: "1",
+      NEXT_PUBLIC_SITE_URL: "",
+      VERCEL_PROJECT_PRODUCTION_URL: "  ",
+    }, getSiteUrl),
+    /A public site URL is required on Vercel/,
+  );
+});

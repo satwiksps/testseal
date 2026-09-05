@@ -107,6 +107,9 @@ After Git path selection, TestSeal applies `include`, `exclude`, and
 `test_patterns`. A file omitted by configuration cannot be restored by a CLI
 path argument.
 
+`include` and `exclude` apply before Git blobs or worktree files are decoded, so
+excluded generated files and virtual environments cannot fail source analysis.
+
 ## Choosing for automation
 
 | Environment | Recommended mode |

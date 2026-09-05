@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
+import sys
 from io import StringIO
 from pathlib import Path
 
@@ -331,3 +333,93 @@ def test_cli_reports_missing_git_as_an_operational_error(
 
     assert code == 2
     assert "testseal: error: cannot execute Git" in stderr.getvalue()
+
+
+def test_git_scan_ignores_display_settings_and_binary_attributes(
+    tmp_path: Path,
+) -> None:
+    root, test_file, base = repository(tmp_path)
+    (root / ".gitattributes").write_text("*.py -diff\n", encoding="utf-8")
+    git(root, "config", "color.ui", "always")
+    git(root, "config", "diff.noprefix", "true")
+    git(root, "config", "diff.outputIndicatorNew", ">")
+    git(root, "config", "diff.outputIndicatorOld", "<")
+    test_file.write_text(NEW, encoding="utf-8")
+    repo = GitRepository(root)
+    changes = repo.working_changes(paths=["tests/test_value.py"])
+    assert [item.rule_id for item in Auditor().audit(changes).findings] == ["TS003"]
+
+    git(root, "add", "tests/test_value.py")
+    changes = repo.staged_changes(paths=["tests/test_value.py"])
+    assert [item.rule_id for item in Auditor().audit(changes).findings] == ["TS003"]
+    git(root, "commit", "-q", "--no-gpg-sign", "--no-verify", "-m", "weaken")
+    changes = repo.revision_changes(base, paths=["tests/test_value.py"])
+    assert [item.rule_id for item in Auditor().audit(changes).findings] == ["TS003"]
+
+
+def test_git_scan_does_not_execute_text_conversion(tmp_path: Path) -> None:
+    root, test_file, base = repository(tmp_path)
+    (root / ".gitattributes").write_text("*.py diff=unsafe\n", encoding="utf-8")
+    # A real Git textconv would create the marker and then fail the scan.
+    git(
+        root, "config", "diff.unsafe.textconv", "echo executed > converter-ran; exit 1;"
+    )
+    test_file.write_text(NEW, encoding="utf-8")
+    repo = GitRepository(root)
+    changes = repo.working_changes(paths=["tests/test_value.py"])
+    assert [item.rule_id for item in Auditor().audit(changes).findings] == ["TS003"]
+    git(root, "add", "tests/test_value.py")
+    changes = repo.staged_changes(paths=["tests/test_value.py"])
+    assert [item.rule_id for item in Auditor().audit(changes).findings] == ["TS003"]
+    git(root, "commit", "-q", "--no-gpg-sign", "--no-verify", "-m", "weaken")
+    changes = repo.revision_changes(base, paths=["tests/test_value.py"])
+    assert [item.rule_id for item in Auditor().audit(changes).findings] == ["TS003"]
+    assert not (root / "converter-ran").exists()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows executable lookup")
+def test_checkout_cannot_shadow_git_executable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, test_file, _ = repository(tmp_path)
+    test_file.write_text(NEW, encoding="utf-8")
+    # This trusted Python launcher would fail if selected instead of PATH Git.
+    shutil.copyfile(sys.executable, root / "git.exe")
+    monkeypatch.chdir(root)
+    changes = GitRepository().working_changes(paths=["tests/test_value.py"])
+    assert [item.rule_id for item in Auditor().audit(changes).findings] == ["TS003"]
+
+
+def test_cli_excludes_files_before_source_decoding(tmp_path: Path) -> None:
+    root, test_file, base = repository(tmp_path)
+    excluded = root / ".venv" / "test_broken.py"
+    excluded.parent.mkdir()
+    excluded.write_bytes(b"\xff\xfeinvalid Python encoding")
+    test_file.write_text(NEW, encoding="utf-8")
+
+    def scan(*arguments: str) -> None:
+        stdout, stderr = StringIO(), StringIO()
+        code = main(
+            [
+                "scan",
+                "--repo",
+                str(root),
+                "--format",
+                "json",
+                "--fail-on",
+                "high",
+                *arguments,
+            ],
+            stdout=stdout,
+            stderr=stderr,
+        )
+        assert code == 1, stderr.getvalue()
+        payload = json.loads(stdout.getvalue())
+        assert payload["summary"]["files_scanned"] == 1
+        assert [item["rule_id"] for item in payload["findings"]] == ["TS003"]
+
+    scan()
+    git(root, "add", ".venv/test_broken.py", "tests/test_value.py")
+    scan("--staged")
+    git(root, "commit", "-q", "--no-gpg-sign", "--no-verify", "-m", "weaken")
+    scan("--base", base)

@@ -6,6 +6,43 @@ is omitted unless it changes installation or runtime behavior.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-09-05
+
+### Fixed
+
+- Detect weakening inside multiline assertions, skip conditions, exception
+  handlers, tolerances, and mock calls when their opening line is unchanged.
+- Preserve large integer tolerances, apply inverse `assertNotAlmostEqual`
+  comparisons correctly, and reject vacuous exception-handler validation.
+- Report AST recursion limits as incomplete analysis, fail on misplaced
+  standalone policy keys, and filter excluded files before source decoding.
+- Encode special filenames in SARIF and return operational errors for broken
+  input/output streams.
+- Reject malformed trailing diff hunks and surplus change lines; preserve Git
+  renames with spaces in their filenames.
+- Include the release-check helper required by source-distribution tests.
+- Allow empty optional website URL settings to fall back to a configured host,
+  and verify production reports against the configured canonical origin.
+- Update Next.js and its companion tooling to 16.3.3, and refresh the Action
+  test tooling, React types, and documentation dependencies.
+- Authenticate public pull-request coverage uploads through Codecov's tokenless
+  PR namespace while retaining coverage thresholds and upload failure checks.
+
+### Security
+
+- Isolate Action Python imports and installer subprocesses from checkout-local
+  modules and Python environment overrides. Preinstalled packages must be in the
+  selected interpreter or virtual environment; user-site and `PYTHONPATH`
+  installations are no longer used by the Action.
+- Resolve Git and Action interpreter executables through `PATH` rather than
+  implicit Windows current-directory lookup. Disable Git text-conversion drivers
+  and override display settings and binary attributes for analyzer input.
+
+### Compatibility
+
+- Tolerance findings preserve exact integer values; fingerprints involving large
+  integer tolerances may change. Review updated findings before suppressing them.
+
 ## [1.0.0] - 2026-08-22
 
 ### Added
@@ -66,6 +103,7 @@ is omitted unless it changes installation or runtime behavior.
 - Release automation validates package metadata and publishes artifact
   checksums.
 
-[Unreleased]: https://github.com/satwiksps/testseal/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/satwiksps/testseal/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/satwiksps/testseal/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/satwiksps/testseal/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/satwiksps/testseal/releases/tag/v0.1.0

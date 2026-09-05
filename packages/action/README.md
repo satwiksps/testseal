@@ -42,6 +42,15 @@ The default `install: true` installs only the root Python project bundled with
 the pinned Action release. Set `install: false` only if a matching TestSeal is
 already installed. The Action fails closed if its bundled source is missing.
 
+Python runs in isolated mode (`-I`) so files in the checked-out project cannot
+replace pip, TestSeal, or Python startup modules. `PYTHONPATH` and user-site
+packages are ignored. Python startup environment overrides are also removed
+before launch so pip's build subprocesses do not inherit them.
+For `install: false`, install TestSeal in a virtual
+environment or the selected interpreter's system environment.
+Executable names are resolved from `PATH` before launch, including on Windows,
+so a checkout-local `python.exe` cannot replace the configured interpreter.
+
 Outputs: finding and severity counts, files scanned, suppressed fingerprint
 count, normalized outcome, and the complete JSON report.
 
@@ -57,3 +66,9 @@ npm run verify
 `npm run verify` formats, lints, type-checks, runs coverage, and rebuilds the
 minified `dist/index.js` plus third-party `dist/licenses.txt`. Both generated
 files must be committed whenever runtime source or dependencies change.
+
+From the repository root, run `python scripts/verify_action.py` to test the
+committed bundle with real Git repositories and a fresh Python environment.
+It requires Node.js, Git, Python 3.11 or newer, and network access for pip's
+build dependencies. It checks installation, scan outputs, event refs, failure
+outcomes, and isolation from untrusted Python modules.

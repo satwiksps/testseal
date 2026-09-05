@@ -102,18 +102,30 @@ def _render(node: ast.AST) -> str:
     return ast.unparse(node)
 
 
-def _literal_number(node: ast.AST) -> float | None:
-    if isinstance(node, ast.Constant) and isinstance(node.value, int | float):
-        return float(node.value)
+def _literal_number(node: ast.AST) -> int | float | None:
+    if isinstance(node, ast.Constant) and type(node.value) in {int, float}:
+        return node.value
     if (
         isinstance(node, ast.UnaryOp)
         and isinstance(node.op, ast.USub | ast.UAdd)
         and isinstance(node.operand, ast.Constant)
-        and isinstance(node.operand.value, int | float)
+        and type(node.operand.value) in {int, float}
     ):
-        value = float(node.operand.value)
+        value = node.operand.value
         return -value if isinstance(node.op, ast.USub) else value
     return None
+
+
+def _format_number(value: int | float) -> str:
+    return str(value) if isinstance(value, int) else f"{value:g}"
+
+
+def _tolerance_weakened(
+    before: int | float, after: int | float, parameter: str, *, negated: bool
+) -> bool:
+    if parameter == "places":
+        return after > before if negated else after < before
+    return after < before if negated else after > before
 
 
 def _is_obviously_true(node: ast.AST) -> bool:
@@ -174,7 +186,8 @@ def _handler_has_unconditional_validation(body: Sequence[ast.stmt]) -> bool:
         if isinstance(statement, ast.Raise):
             return True
         if isinstance(statement, ast.Assert):
-            return not _is_obviously_true(statement.test)
+            if not _is_obviously_true(statement.test):
+                return True
         if isinstance(statement, ast.Expr) and _is_validation_call(statement.value):
             return True
         if isinstance(
@@ -265,7 +278,7 @@ class ToleranceRecord:
     scope: str
     call: str
     parameter: str
-    value: float
+    value: int | float
     line: int
     column: int
     evidence: str
@@ -279,6 +292,13 @@ class Inventory:
     catches: list[SyntaxRecord]
     tolerances: list[ToleranceRecord]
     mocks: list[SyntaxRecord]
+
+
+def _has_added_lines(change: ChangedFile, record: SyntaxRecord) -> bool:
+    return any(
+        line.new_line is not None and record.line <= line.new_line <= record.end_line
+        for line in change.added_lines
+    )
 
 
 _ASSERT_METHOD_RANKS: dict[str, int] = {
@@ -466,7 +486,9 @@ def _expression_info(node: ast.AST, *, negate: bool = False) -> _AssertionInfo:
 
     category = "falsy" if negate else "truthy"
     subject = _stable_dump(node)
-    tautology = _is_obviously_true(node) if not negate else False
+    tautology = _is_obviously_true(
+        ast.UnaryOp(op=ast.Not(), operand=node) if negate else node
+    )
     return _AssertionInfo(
         kind=f"assert:{category}",
         strength=2,
@@ -1099,14 +1121,14 @@ class RuleEngine:
         if change.old_source is not None:
             try:
                 old_inventory = inventory(change.old_source)
-            except (SyntaxError, ValueError) as exc:
+            except (SyntaxError, ValueError, RecursionError) as exc:
                 parse_warning = f"{change.path}: old source could not be parsed ({exc})"
         else:
             old_inventory = Inventory([], [], [], [], [])
         if change.new_source is not None:
             try:
                 new_inventory = inventory(change.new_source)
-            except (SyntaxError, ValueError) as exc:
+            except (SyntaxError, ValueError, RecursionError) as exc:
                 parse_warning = f"{change.path}: new source could not be parsed ({exc})"
         else:
             new_inventory = Inventory([], [], [], [], [])
@@ -1170,14 +1192,12 @@ class RuleEngine:
         # consume the old count and make the genuinely new record disappear.
         ordered = sorted(
             new,
-            key=lambda record: (change.is_new_line_changed(record.line), record.line),
+            key=lambda record: (_has_added_lines(change, record), record.line),
         )
         for record in ordered:
             record_key = key(record)
             if old_counts[record_key]:
                 old_counts[record_key] -= 1
-                continue
-            if not change.is_new_line_changed(record.line) and change.lines:
                 continue
             finding = self._finding(
                 rule_id,
@@ -1206,8 +1226,10 @@ class RuleEngine:
 
         # Match syntax that survived the diff before considering added lines.
         # This is essential when an identical marker is prepended to a test.
+        pending: list[SyntaxRecord] = []
         for record in sorted(new.skips, key=lambda item: item.line):
-            if change.lines and change.is_new_line_changed(record.line):
+            if _has_added_lines(change, record):
+                pending.append(record)
                 continue
             match = next(
                 (item for item in remaining_old if compatible(item, record)),
@@ -1215,11 +1237,13 @@ class RuleEngine:
             )
             if match is not None:
                 remaining_old.remove(match)
+            else:
+                # A deletion inside a multiline call can change its semantics
+                # without adding any lines (for example, removing a condition).
+                pending.append(record)
 
         findings: list[Finding] = []
-        for record in sorted(new.skips, key=lambda item: item.line):
-            if change.lines and not change.is_new_line_changed(record.line):
-                continue
+        for record in pending:
             candidates = [item for item in remaining_old if compatible(item, record)]
             match = min(
                 candidates,
@@ -1356,8 +1380,6 @@ class RuleEngine:
                 change, old_records, new_records
             )
             for before, after in pairs:
-                if change.lines and not change.is_new_line_changed(after.line):
-                    continue
                 if not self._assertion_weakened(before, after):
                     continue
                 detail = (
@@ -1378,8 +1400,6 @@ class RuleEngine:
                     findings.append(finding)
 
             for removed in removed_records:
-                if not change.is_old_line_changed(removed.line) and change.lines:
-                    continue
                 finding = self._finding(
                     "TS001",
                     change,
@@ -1447,12 +1467,11 @@ class RuleEngine:
                     key=lambda item: abs(item.line - mapped_line),
                 )
                 available_after.remove(after)
-                widened = (
-                    after.value < before.value
-                    if after.parameter == "places"
-                    else after.value > before.value
+                negated = after.call.rsplit(".", 1)[-1] == "assertNotAlmostEqual"
+                widened = _tolerance_weakened(
+                    before.value, after.value, after.parameter, negated=negated
                 )
-                if not widened or not change.is_new_line_changed(after.line):
+                if not widened:
                     continue
                 finding = self._finding(
                     "TS004",
@@ -1460,8 +1479,10 @@ class RuleEngine:
                     line=after.line,
                     column=after.column,
                     message=(
-                        f"{after.parameter} tolerance widened from "
-                        f"{before.value:g} to {after.value:g} in {after.scope}"
+                        f"{after.parameter} "
+                        f"{'inequality tolerance relaxed' if negated else 'tolerance widened'} from "
+                        f"{_format_number(before.value)} to "
+                        f"{_format_number(after.value)} in {after.scope}"
                     ),
                     evidence=f"{before.evidence}  ->  {after.evidence}",
                 )
@@ -1599,10 +1620,12 @@ class RuleEngine:
             for (before_line, before_value), (after_line, after_value) in zip(
                 old_tolerances[parameter], new_tolerances[parameter], strict=False
             ):
-                widened = (
-                    after_value < before_value
-                    if parameter == "places"
-                    else after_value > before_value
+                negated = all(
+                    re.search(r"\bassertNotAlmostEqual\s*\(", line.content)
+                    for line in (before_line, after_line)
+                )
+                widened = _tolerance_weakened(
+                    before_value, after_value, parameter, negated=negated
                 )
                 if not widened:
                     continue
@@ -1614,7 +1637,8 @@ class RuleEngine:
                     change,
                     line=after_line.new_line or 1,
                     message=(
-                        f"{parameter} tolerance widened from "
+                        f"{parameter} "
+                        f"{'inequality tolerance relaxed' if negated else 'tolerance widened'} from "
                         f"{before_value:g} to {after_value:g}"
                     ),
                     evidence=evidence,

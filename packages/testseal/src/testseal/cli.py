@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from collections.abc import Sequence
 from contextlib import suppress
@@ -95,9 +96,22 @@ def _read_diff(path: str, stdin: TextIO) -> str:
         raise DiffError(f"cannot read diff {path}: {exc}") from exc
 
 
+def _write_stdout(stdout: TextIO, report: str) -> None:
+    try:
+        stdout.write(report)
+        stdout.flush()
+    except OSError:
+        if stdout is sys.stdout:
+            # A second failed flush during shutdown would override our exit code.
+            with suppress(OSError, ValueError):
+                with open(os.devnull, "wb") as sink:
+                    os.dup2(sink.fileno(), stdout.fileno())
+        raise
+
+
 def _run_demo(*, stdout: TextIO) -> int:
     result = Auditor().audit(parse_unified_diff(_DEMO_DIFF))
-    stdout.write(render(result, "text"))
+    _write_stdout(stdout, render(result, "text"))
     return 0
 
 
@@ -108,21 +122,28 @@ def _run_scan(args: argparse.Namespace, *, stdin: TextIO, stdout: TextIO) -> int
 
     head = "HEAD" if args.head is None else args.head
     if args.diff is not None:
-        config_root = args.repo
+        config = load_config(args.config, cwd=args.repo).with_fail_on(args.fail_on)
         changes = filter_changes(
             parse_unified_diff(_read_diff(args.diff, stdin)), args.paths
         )
     else:
         repository = GitRepository(args.repo)
-        config_root = repository.root
+        config = load_config(args.config, cwd=repository.root).with_fail_on(
+            args.fail_on
+        )
         if args.staged:
-            changes = repository.staged_changes(paths=args.paths)
+            changes = repository.staged_changes(
+                paths=args.paths, include=config.includes_path
+            )
         elif args.base is not None:
-            changes = repository.revision_changes(args.base, head, paths=args.paths)
+            changes = repository.revision_changes(
+                args.base, head, paths=args.paths, include=config.includes_path
+            )
         else:
-            changes = repository.working_changes(head=head, paths=args.paths)
+            changes = repository.working_changes(
+                head=head, paths=args.paths, include=config.includes_path
+            )
 
-    config = load_config(args.config, cwd=config_root).with_fail_on(args.fail_on)
     result = Auditor(config).audit(changes)
     report = render(result, args.format)
     if args.output:
@@ -146,7 +167,7 @@ def _run_scan(args: argparse.Namespace, *, stdin: TextIO, stdout: TextIO) -> int
                     temporary.unlink()
             raise DiffError(f"cannot write report {output}: {exc}") from exc
     else:
-        stdout.write(report)
+        _write_stdout(stdout, report)
     if result.parse_warnings and config.fail_on is not None:
         return 2
     return 1 if result.fails_at(config.fail_on) else 0
@@ -168,6 +189,6 @@ def main(
         if args.command == "demo":
             return _run_demo(stdout=stdout)
         return _run_scan(args, stdin=stdin, stdout=stdout)
-    except (ConfigError, DiffError, ValueError) as exc:
+    except (ConfigError, DiffError, ValueError, OSError) as exc:
         stderr.write(f"testseal: error: {exc}\n")
         return 2

@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import difflib
 import io
+import os
 import re
+import shutil
 import subprocess
 import tokenize
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -101,6 +103,21 @@ class ChangedFile:
 
 
 _HUNK = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(?: .*)?$")
+
+# Git's human-facing defaults and repository diff drivers are not analyzer input.
+_DIFF_OPTIONS = (
+    "--no-ext-diff",
+    "--no-textconv",
+    "--no-color",
+    "--text",
+    "--no-relative",
+    "--src-prefix=a/",
+    "--dst-prefix=b/",
+    "--output-indicator-new=+",
+    "--output-indicator-old=-",
+    "--output-indicator-context= ",
+    "--unified=3",
+)
 
 _C_ESCAPES = {
     "a": 0x07,
@@ -238,7 +255,16 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
         path = current.path if current is not None else "<unknown>"
         return f"incomplete file diff for {path!r}: no change content"
 
-    for raw in text.splitlines():
+    def validate_file() -> None:
+        if current is None:
+            return
+        if not current_has_content:
+            raise DiffError(incomplete_file_message())
+        if current.old_path is None and current.new_path is None:
+            raise DiffError("cannot determine file paths from diff headers")
+
+    for raw in text.removesuffix("\n").split("\n"):
+        raw = raw.removesuffix("\r")
         if in_hunk and current is not None:
             if raw.startswith("\\ No newline at end of file"):
                 continue
@@ -278,15 +304,25 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
                 in_hunk = False
             continue
 
-        header = _git_header_paths(raw)
-        if header is not None:
-            if current is not None and not current_has_content:
-                raise DiffError(incomplete_file_message())
-            current = ChangedFile(*header)
+        if raw.startswith("diff --git "):
+            validate_file()
+            # Git leaves spaces unquoted. Those headers can be ambiguous;
+            # extended rename/copy or ---/+++ headers supply the exact paths.
+            current = ChangedFile(*(_git_header_paths(raw) or (None, None)))
             files.append(current)
             saw_old_header = False
             saw_new_header = False
             current_has_content = False
+            continue
+
+        if current is not None and raw.startswith(("rename from ", "copy from ")):
+            current.old_path = _decode_git_path(raw.split(" ", 2)[2])
+            current_has_content = True
+            continue
+
+        if current is not None and raw.startswith(("rename to ", "copy to ")):
+            current.new_path = _decode_git_path(raw.split(" ", 2)[2])
+            current_has_content = True
             continue
 
         if current is not None and raw.startswith("new file mode "):
@@ -303,10 +339,6 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
             (
                 "old mode ",
                 "new mode ",
-                "rename from ",
-                "rename to ",
-                "copy from ",
-                "copy to ",
                 "Binary files ",
                 "GIT binary patch",
                 "Submodule ",
@@ -318,8 +350,7 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
         if raw.startswith("--- "):
             path = _clean_header_path(raw[4:])
             if current is None or saw_old_header:
-                if current is not None and not current_has_content:
-                    raise DiffError(incomplete_file_message())
+                validate_file()
                 current = ChangedFile(path, None)
                 files.append(current)
                 saw_new_header = False
@@ -329,6 +360,8 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
             saw_old_header = True
             continue
         if raw.startswith("+++ "):
+            if saw_new_header:
+                raise DiffError("unexpected new file header without an old file header")
             path = _clean_header_path(raw[4:])
             if current is None:
                 current = ChangedFile(None, path)
@@ -353,10 +386,19 @@ def parse_unified_diff(text: str) -> list[ChangedFile]:
             in_hunk = old_remaining > 0 or new_remaining > 0
             continue
 
+        if raw.startswith("@@"):
+            raise DiffError(f"malformed hunk header: {raw!r}")
+        if current is not None and raw.startswith(("+", "-")):
+            # git format-patch appends this signature separator after its diff.
+            if raw == "-- " and current_has_content:
+                continue
+            raise DiffError(
+                f"unexpected change line outside a hunk for {current.path!r}"
+            )
+
     if in_hunk:
         raise DiffError(incomplete_hunk_message())
-    if current is not None and not current_has_content:
-        raise DiffError(incomplete_file_message())
+    validate_file()
     changes = [item for item in files if item.old_path or item.new_path]
     if text.strip() and not changes:
         raise DiffError("input does not contain a unified diff")
@@ -393,16 +435,28 @@ class GitRepository:
     """Read diffs and corresponding blobs from one Git work tree."""
 
     def __init__(self, root: str | Path = ".") -> None:
+        self._git = self._find_git()
         self.root = Path(root).resolve()
         discovered = self._run("rev-parse", "--show-toplevel").strip()
         if not discovered:
             raise DiffError(f"not a Git repository: {self.root}")
         self.root = Path(discovered)
 
+    @staticmethod
+    def _find_git() -> str:
+        # Resolve each PATH entry explicitly: Windows process creation and
+        # shutil.which may otherwise prefer an executable in the scanned cwd.
+        executable = "git.exe" if os.name == "nt" else "git"
+        for directory in os.get_exec_path():
+            candidate = shutil.which(str(Path(directory).absolute() / executable))
+            if candidate:
+                return candidate
+        raise DiffError("cannot execute Git: git executable not found on PATH")
+
     def _run(self, *args: str) -> str:
         try:
             process = subprocess.run(
-                ["git", "-C", str(self.root), *args],
+                [self._git, "-C", str(self.root), *args],
                 capture_output=True,
                 check=False,
             )
@@ -435,7 +489,7 @@ class GitRepository:
         try:
             process = subprocess.run(
                 [
-                    "git",
+                    self._git,
                     "-C",
                     str(self.root),
                     "show",
@@ -471,13 +525,19 @@ class GitRepository:
         return _decode_source(data, path)
 
     def working_changes(
-        self, *, head: str = "HEAD", paths: Sequence[str] = ()
+        self,
+        *,
+        head: str = "HEAD",
+        paths: Sequence[str] = (),
+        include: Callable[[str], bool] | None = None,
     ) -> list[ChangedFile]:
         head = self._revision(head, label="head")
-        patch = self._run(
-            "diff", "--no-ext-diff", "--unified=3", head, *self._path_args(paths)
-        )
-        files = parse_unified_diff(patch)
+        patch = self._run("diff", *_DIFF_OPTIONS, head, *self._path_args(paths))
+        files = [
+            item
+            for item in parse_unified_diff(patch)
+            if include is None or include(item.path)
+        ]
         for item in files:
             item.old_source = self._blob(head, item.old_path)
             item.new_source = self._worktree_file(item.new_path)
@@ -492,6 +552,8 @@ class GitRepository:
             if not raw_path:
                 continue
             path = raw_path.replace("\\", "/")
+            if include is not None and not include(path):
+                continue
             new_source = self._worktree_file(path)
             if new_source is None:
                 raise DiffError(f"cannot hydrate untracked file {path!r}")
@@ -510,18 +572,30 @@ class GitRepository:
             )
         return files
 
-    def staged_changes(self, *, paths: Sequence[str] = ()) -> list[ChangedFile]:
-        patch = self._run(
-            "diff", "--cached", "--no-ext-diff", "--unified=3", *self._path_args(paths)
-        )
-        files = parse_unified_diff(patch)
+    def staged_changes(
+        self,
+        *,
+        paths: Sequence[str] = (),
+        include: Callable[[str], bool] | None = None,
+    ) -> list[ChangedFile]:
+        patch = self._run("diff", "--cached", *_DIFF_OPTIONS, *self._path_args(paths))
+        files = [
+            item
+            for item in parse_unified_diff(patch)
+            if include is None or include(item.path)
+        ]
         for item in files:
             item.old_source = self._blob("HEAD", item.old_path)
             item.new_source = self._blob(":", item.new_path)
         return files
 
     def revision_changes(
-        self, base: str, head: str = "HEAD", *, paths: Sequence[str] = ()
+        self,
+        base: str,
+        head: str = "HEAD",
+        *,
+        paths: Sequence[str] = (),
+        include: Callable[[str], bool] | None = None,
     ) -> list[ChangedFile]:
         base = self._revision(base, label="base")
         head = self._revision(head, label="head")
@@ -530,13 +604,16 @@ class GitRepository:
             raise DiffError(f"no merge base between {base!r} and {head!r}")
         patch = self._run(
             "diff",
-            "--no-ext-diff",
-            "--unified=3",
+            *_DIFF_OPTIONS,
             merge_base,
             head,
             *self._path_args(paths),
         )
-        files = parse_unified_diff(patch)
+        files = [
+            item
+            for item in parse_unified_diff(patch)
+            if include is None or include(item.path)
+        ]
         for item in files:
             item.old_source = self._blob(merge_base, item.old_path)
             item.new_source = self._blob(head, item.new_path)

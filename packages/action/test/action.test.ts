@@ -59,6 +59,7 @@ describe('installation resolution', () => {
     const exists = (path: string): boolean => path === resolve(packagePath, 'pyproject.toml');
 
     expect(installArgs(workspace, exists)).toEqual([
+      '-I',
       '-m',
       'pip',
       'install',
@@ -95,6 +96,7 @@ describe('runAction', () => {
       {
         command: 'python3',
         args: [
+          '-I',
           '-m',
           'testseal',
           'scan',

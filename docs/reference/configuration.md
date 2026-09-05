@@ -12,12 +12,17 @@ types, and malformed fingerprints return exit code `2`.
 Without `--config`, TestSeal loads the first applicable source from the
 repository root:
 
-1. `testseal.toml` with a `[testseal]` table.
+1. `testseal.toml` with a `[testseal]` table (or top-level TestSeal keys).
 2. `pyproject.toml` with a `[tool.testseal]` table.
 3. Built-in defaults.
 
 An explicit `--config PATH` takes precedence. Explicit files can use a
 `[testseal]` table, `[tool.testseal]`, or top-level TestSeal keys.
+
+In `testseal.toml`, keep all policy inside the selected table. Misspelled tables
+and keys placed beside it are errors; for example, rule overrides belong in
+`[testseal.rules.TS001]`, not a separate `[rules.TS001]` table. A discovered
+`pyproject.toml` without `[tool.testseal]` still uses defaults.
 
 ## Complete example
 

@@ -115,7 +115,8 @@ The document uses:
 - package version in `semanticVersion`;
 - one rule descriptor per rule present in the result;
 - `error`, `warning`, and `note` levels for high, medium, and low severity;
-- repository-relative artifact URIs;
+- repository-relative artifact URIs, with spaces, Unicode, and URI punctuation
+  percent-encoded (JSON paths remain ordinary filenames);
 - one-based source regions;
 - `testseal/v1` partial fingerprints;
 - invocation properties containing the report summary;
