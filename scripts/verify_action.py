@@ -73,6 +73,8 @@ def verify(workspace: Path) -> None:
         "-c",
         "user.email=testseal@example.invalid",
         "commit",
+        "--no-gpg-sign",
+        "--no-verify",
         "-qm",
         "base",
     )
@@ -165,6 +167,8 @@ def verify(workspace: Path) -> None:
         "-c",
         "user.email=testseal@example.invalid",
         "commit",
+        "--no-gpg-sign",
+        "--no-verify",
         "-qm",
         "head",
     )

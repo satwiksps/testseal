@@ -258,6 +258,8 @@ def test_real_git_staged_rename_with_spaces_hydrates_both_sources(
         "-c",
         "user.email=testseal@example.invalid",
         "commit",
+        "--no-gpg-sign",
+        "--no-verify",
         "-m",
         "initial test",
     )
