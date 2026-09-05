@@ -6,7 +6,7 @@ import packageMetadata from "../package.json";
 
 const RELEASE_VERSION = packageMetadata.version;
 const RELEASE_REF = `v${RELEASE_VERSION}`;
-const ACTION_COMMIT = "e6bba7e933c37afc34e2836ac2b1baee7542bfe5";
+const ACTION_COMMIT = "d12f42c93b565c3a0b27acf8eabafce881c09b35";
 
 const rules = [
   {
