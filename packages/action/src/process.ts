@@ -1,5 +1,7 @@
 import { spawn } from 'node:child_process';
 
+import { which } from '@actions/io';
+
 import type { CommandResult, CommandRunner } from './types';
 
 const MAX_CAPTURE_BYTES = 32 * 1024 * 1024;
@@ -9,7 +11,15 @@ export class CommandError extends Error {
 }
 
 export class NodeCommandRunner implements CommandRunner {
-  run(command: string, args: readonly string[]): Promise<CommandResult> {
+  async run(command: string, args: readonly string[]): Promise<CommandResult> {
+    let executable: string;
+    try {
+      // Resolve PATH explicitly so Windows cannot select a checkout-local executable.
+      executable = await which(command, true);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new CommandError(`Unable to start '${command}': ${detail}`);
+    }
     return new Promise((resolve, reject) => {
       let stdoutBytes = 0;
       let stderrBytes = 0;
@@ -17,9 +27,12 @@ export class NodeCommandRunner implements CommandRunner {
       const stderr: Buffer[] = [];
       let settled = false;
 
-      const child = spawn(command, [...args], {
+      const child = spawn(executable, [...args], {
         cwd: process.cwd(),
-        env: process.env,
+        // pip starts further Python processes which do not inherit the -I flag.
+        env: Object.fromEntries(
+          Object.entries(process.env).filter(([name]) => !name.toUpperCase().startsWith('PYTHON')),
+        ),
         shell: false,
         stdio: ['ignore', 'pipe', 'pipe'],
         windowsHide: true,

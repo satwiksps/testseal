@@ -108,6 +108,10 @@ If a controlled runner image already contains the matching version:
 `python-command` must be an executable name or absolute path. It is not passed
 through a shell and cannot contain command-line flags.
 
+The selected interpreter must provide TestSeal in a virtual environment or
+system installation. Python runs with `-I`, which excludes the checkout,
+`PYTHONPATH`, and user-site packages from import resolution.
+
 ## Consume outputs
 
 ```yaml
