@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
 from io import StringIO
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -462,3 +465,46 @@ def test_cli_stream_failures_return_an_operational_error(failed_stream: str) -> 
     streams[failed_stream] = FailingStream()
     assert main(["scan", "--diff", "-"], stderr=stderr, **streams) == 2
     assert stderr.getvalue().startswith("testseal: error: ")
+
+
+@pytest.mark.parametrize("mode", ["demo", "scan", "output-file"])
+def test_cli_closed_stdout_pipe_preserves_operational_exit_code(
+    mode: str, tmp_path: Path
+) -> None:
+    output = tmp_path / "report.txt"
+    arguments = ["demo"] if mode == "demo" else ["scan", "--diff", "-"]
+    if mode == "output-file":
+        arguments.extend(["--output", str(output)])
+    patch = (
+        "--- a/tests/test_value.py\n+++ b/tests/test_value.py\n@@ -1 +1 @@\n"
+        "-assert value == 42\n+assert value\n"
+    )
+    reader, writer = os.pipe()
+    os.close(reader)
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "testseal", *arguments],
+            cwd=tmp_path,
+            env={
+                **os.environ,
+                "PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src"),
+            },
+            input=patch,
+            stdout=writer,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            check=False,
+            timeout=30,
+        )
+    finally:
+        os.close(writer)
+    assert "Traceback" not in result.stderr
+    assert "Exception ignored" not in result.stderr
+    if mode == "output-file":
+        assert result.returncode == 0, result.stderr
+        assert result.stderr == ""
+        assert "TS003" in output.read_text(encoding="utf-8")
+    else:
+        assert result.returncode == 2, result.stderr
+        assert result.stderr.startswith("testseal: error: ")

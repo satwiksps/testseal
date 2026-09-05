@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from collections.abc import Sequence
 from contextlib import suppress
@@ -95,9 +96,22 @@ def _read_diff(path: str, stdin: TextIO) -> str:
         raise DiffError(f"cannot read diff {path}: {exc}") from exc
 
 
+def _write_stdout(stdout: TextIO, report: str) -> None:
+    try:
+        stdout.write(report)
+        stdout.flush()
+    except OSError:
+        if stdout is sys.stdout:
+            # A second failed flush during shutdown would override our exit code.
+            with suppress(OSError, ValueError):
+                with open(os.devnull, "wb") as sink:
+                    os.dup2(sink.fileno(), stdout.fileno())
+        raise
+
+
 def _run_demo(*, stdout: TextIO) -> int:
     result = Auditor().audit(parse_unified_diff(_DEMO_DIFF))
-    stdout.write(render(result, "text"))
+    _write_stdout(stdout, render(result, "text"))
     return 0
 
 
@@ -153,7 +167,7 @@ def _run_scan(args: argparse.Namespace, *, stdin: TextIO, stdout: TextIO) -> int
                     temporary.unlink()
             raise DiffError(f"cannot write report {output}: {exc}") from exc
     else:
-        stdout.write(report)
+        _write_stdout(stdout, report)
     if result.parse_warnings and config.fail_on is not None:
         return 2
     return 1 if result.fails_at(config.fail_on) else 0
