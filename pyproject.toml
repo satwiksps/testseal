@@ -64,6 +64,7 @@ packages = ["packages/testseal/src/testseal"]
 include = [
   "packages/testseal/src/testseal",
   "packages/testseal/tests",
+  "scripts/check_release_version.py",
   "LICENSE",
   "README.md",
   "pyproject.toml",
