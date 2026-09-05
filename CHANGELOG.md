@@ -6,6 +6,8 @@ is omitted unless it changes installation or runtime behavior.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-09-05
+
 ### Fixed
 
 - Detect weakening inside multiline assertions, skip conditions, exception
@@ -97,6 +99,7 @@ is omitted unless it changes installation or runtime behavior.
 - Release automation validates package metadata and publishes artifact
   checksums.
 
-[Unreleased]: https://github.com/satwiksps/testseal/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/satwiksps/testseal/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/satwiksps/testseal/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/satwiksps/testseal/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/satwiksps/testseal/releases/tag/v0.1.0

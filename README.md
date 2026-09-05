@@ -150,7 +150,7 @@ The hook installs TestSeal in its own environment and scans the staged diff:
 ```yaml
 repos:
   - repo: https://github.com/satwiksps/testseal
-    rev: v1.0.0
+    rev: v1.0.1
     hooks:
       - id: testseal
         args: ["--fail-on", "high"] # omit to remain advisory
