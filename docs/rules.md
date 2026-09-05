@@ -13,6 +13,10 @@ assertions, decorators, calls, and exception handlers. Their opening lines do
 not have to change for a finding to be reported. Patch-only scans have less
 context and may miss these edits.
 
+Source that exceeds the interpreter's parsing or recursion limits produces a
+parse warning. A blocking scan returns exit code `2` for that incomplete
+analysis.
+
 ## Severity, confidence, and policy
 
 Severity describes the potential review impact of a matched transformation;

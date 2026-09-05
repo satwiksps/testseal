@@ -1121,14 +1121,14 @@ class RuleEngine:
         if change.old_source is not None:
             try:
                 old_inventory = inventory(change.old_source)
-            except (SyntaxError, ValueError) as exc:
+            except (SyntaxError, ValueError, RecursionError) as exc:
                 parse_warning = f"{change.path}: old source could not be parsed ({exc})"
         else:
             old_inventory = Inventory([], [], [], [], [])
         if change.new_source is not None:
             try:
                 new_inventory = inventory(change.new_source)
-            except (SyntaxError, ValueError) as exc:
+            except (SyntaxError, ValueError, RecursionError) as exc:
                 parse_warning = f"{change.path}: new source could not be parsed ({exc})"
         else:
             new_inventory = Inventory([], [], [], [], [])

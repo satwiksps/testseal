@@ -59,3 +59,13 @@ def test_tautology_before_unconditional_reraise_does_not_hide_validation() -> No
         "def test_value():\n    try:\n        call()\n    except Exception:\n        assert True\n        raise\n",
     )
     assert result.findings == []
+
+
+@pytest.mark.parametrize("side", ["old", "new"])
+def test_deep_expression_becomes_a_parse_warning_instead_of_crashing(side: str) -> None:
+    deep_source = "def test_value():\n    assert " + " + ".join(["value"] * 2000) + "\n"
+    simple_source = "def test_value():\n    assert value\n"
+    old, new = (deep_source, simple_source) if side == "old" else (simple_source, deep_source)
+    result = Auditor().audit([changes_from_sources("tests/test_value.py", old, new)])
+    assert len(result.parse_warnings) == 1
+    assert f"{side} source could not be parsed" in result.parse_warnings[0]
