@@ -23,10 +23,12 @@ TestSeal requires Python 3.11 or newer. The Action uses Node.js 24.
 git clone https://github.com/satwiksps/testseal.git
 cd testseal
 python -m venv .venv
+# POSIX: source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
 python -m pip install -e ".[dev]"
 ```
 
-Activate the virtual environment using the command for your shell, then run:
+With the virtual environment active, run:
 
 ```bash
 python -m ruff check packages/testseal/src packages/testseal/tests scripts
@@ -45,6 +47,12 @@ npm run verify
 
 `npm run verify` rebuilds `packages/action/dist/index.js`. Commit the rebuilt
 bundle and `dist/licenses.txt` when Action runtime code or dependencies change.
+
+From the repository root, also run `python scripts/verify_action.py` with Node.js
+24 on `PATH`. It installs the committed bundle into a fresh Python environment
+and checks real Git scans and isolation from checkout-local modules and executables.
+The installation needs access to the configured Python package index for build
+dependencies.
 
 For website changes:
 

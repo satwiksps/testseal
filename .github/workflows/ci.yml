@@ -189,9 +189,13 @@ jobs:
         run: git diff --exit-code -- dist
 
   action-integration:
-    name: Action integration
+    name: Action integration on ${{ matrix.os }}
     needs: [python, action]
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -203,6 +207,11 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: pyproject.toml
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - name: Verify bundled installation and untrusted checkout isolation
+        run: python scripts/verify_action.py
       - name: Exercise the public Action entry point
         uses: ./
         with:
