@@ -62,6 +62,10 @@ updates:
           - react-dom
           - "@types/react"
           - "@types/react-dom"
+      next:
+        patterns:
+          - next
+          - "@next/*"
       site-development:
         dependency-type: development
 

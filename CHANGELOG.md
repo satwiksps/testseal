@@ -23,6 +23,10 @@ is omitted unless it changes installation or runtime behavior.
 - Include the release-check helper required by source-distribution tests.
 - Allow empty optional website URL settings to fall back to a configured host,
   and verify production reports against the configured canonical origin.
+- Update Next.js and its companion tooling to 16.3.3, and refresh the Action
+  test tooling, React types, and documentation dependencies.
+- Authenticate public pull-request coverage uploads through Codecov's tokenless
+  PR namespace while retaining coverage thresholds and upload failure checks.
 
 ### Security
 
